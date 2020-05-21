@@ -1,0 +1,51 @@
+scalar DateTime
+
+interface FileSystemNode {
+    path: String!
+    modified: DateTime!
+}
+
+type Directory implements FileSystemNode {
+    path: String!
+    modified: DateTime!
+}
+
+type File implements FileSystemNode  {
+    path: String!
+    modified: DateTime!
+    size: Int!
+    contents: String!
+}
+
+enum FileSystemEventType {
+    CREATED, DELETED, MODIFIED
+}
+
+type FilesystemEvent {
+    type: FileSystemEventType!
+    path: String!
+}
+
+type Query {
+    files: [FileSystemNode!]!
+    file(path: String!): FileSystemNode
+}
+
+enum REPLType {
+    DEFAULT, RUN
+}
+
+type Mutation {
+    writeFile(path: String!, contents: String!): FileSystemNode!
+
+    createRepl(type: REPLType): ID!
+    killRepl(id: ID!): Int
+    writeRepl(id: ID!, data: String!): Int
+    resizeRepl(id: ID!, cols: Int!, rows: Int!): Boolean
+}
+
+type Subscription {
+    fileChange: FilesystemEvent!
+    replOutput(id: ID!): String!
+    replWait(id: ID!): Int!
+}

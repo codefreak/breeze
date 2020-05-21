@@ -1,0 +1,19 @@
+{
+  "name": "@codefreak/breeze",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Pluggable cloud-native editor and REPL environment for the browser",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/codefreak/breeze.git"
+  },
+  "author": "Henning Kasch <henning.kasch@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/codefreak/breeze/issues"
+  },
+  "homepage": "https://github.com/codefreak/breeze#readme",
+  "workspaces": [
+    "packages/*"
+  ]
+}

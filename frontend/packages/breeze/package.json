@@ -1,0 +1,63 @@
+{
+  "name": "@codefreak/breeze-app",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@ant-design/icons": "^4.1.0",
+    "@apollo/react-hooks": "^3.1.5",
+    "@codefreak/tree-utils": "^1.0.0",
+    "@craco/craco": "^5.6.4",
+    "@graphql-codegen/cli": "^1.13.3",
+    "@graphql-codegen/typescript": "^1.13.3",
+    "@graphql-codegen/typescript-operations": "^1.13.3",
+    "@graphql-codegen/typescript-react-apollo": "^1.13.3",
+    "@monaco-editor/react": "^3.3.0",
+    "@testing-library/jest-dom": "^4.2.4",
+    "@testing-library/react": "^9.3.2",
+    "@testing-library/user-event": "^7.1.2",
+    "@types/jest": "^24.0.0",
+    "@types/node": "^12.0.0",
+    "@types/react": "^16.9.0",
+    "@types/react-dom": "^16.9.0",
+    "antd": "~4",
+    "apollo-boost": "^0.4.7",
+    "apollo-link-ws": "^1.0.20",
+    "craco-antd": "^1.14.1",
+    "craco-less": "^1.16.0",
+    "graphql": "^15.0.0",
+    "less": "^3.11.1",
+    "less-loader": "^5.0.0",
+    "monaco-editor": "^0.20.0",
+    "prettier": "^2.0.4",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1",
+    "react-scripts": "3.4.1",
+    "subscriptions-transport-ws": "^0.9.16",
+    "ts-debounce": "^2.0.1",
+    "typescript": "~3.7.2",
+    "xterm": "^4.5.0",
+    "xterm-addon-fit": "^0.3.0"
+  },
+  "scripts": {
+    "start": "craco start",
+    "build": "yarn run generate && craco build",
+    "test": "craco test",
+    "generate": "graphql-codegen"
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "proxy": "http://localhost:8080"
+}
