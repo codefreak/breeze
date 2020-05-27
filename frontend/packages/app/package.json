@@ -39,7 +39,7 @@
     "xterm-addon-fit": "^0.3.0"
   },
   "scripts": {
-    "start": "craco start",
+    "start": "yarn run generate && craco start",
     "build": "yarn run generate && craco build",
     "test": "craco test",
     "generate": "graphql-codegen"
