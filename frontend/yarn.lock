@@ -1166,11 +1166,6 @@
   resolved "https://registry.yarnpkg.com/@csstools/normalize.css/-/normalize.css-10.1.0.tgz#f0950bba18819512d42f7197e56c518aa491cf18"
   integrity sha512-ij4wRiunFfaJxjB0BdrYHIH8FxBJpOwNPhhAcunlmPdXudL1WQV1qoP9un6JsEBAgQH+7UXyyjh0g7jTxXK6tg==
 
-"@exuanbo/file-icons-js@^3.1.1":
-  version "3.1.1"
-  resolved "https://registry.yarnpkg.com/@exuanbo/file-icons-js/-/file-icons-js-3.1.1.tgz#0592a72ced9e2c9aafba0ab6a8ccb968df70047a"
-  integrity sha512-8Qq6mM5Mv7neKWhFynynjMit+x+7clfOpA/waocPzNxABMYzuzLygdeXhzOyPYY1YFD4VI4TKuN95X0fQ1k08g==
-
 "@graphql-codegen/cli@^1.13.3":
   version "1.13.5"
   resolved "https://registry.yarnpkg.com/@graphql-codegen/cli/-/cli-1.13.5.tgz#578c96dcbee68190b0365634214a25dfe067f4c8"
