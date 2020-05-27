@@ -9,7 +9,11 @@ import org.codefreak.breeze.graphql.FilesDataFetcher
 import org.codefreak.breeze.graphql.FilesService
 import org.codefreak.breeze.graphql.GraphQLFactory
 import org.codefreak.breeze.shell.docker.DockerProcessFactory
+import org.codefreak.breeze.vertx.FilesystemEvent
+import org.codefreak.breeze.vertx.FilesystemEventCodec
+import org.codefreak.breeze.vertx.FilesystemWatcher
 import org.slf4j.LoggerFactory
+import java.nio.file.Paths
 
 class Application : AbstractVerticle() {
     companion object {
@@ -17,26 +21,23 @@ class Application : AbstractVerticle() {
     }
 
     override fun start() {
-        log.info("launching...");
-        log.warn("launching...");
-        log.error("launching...");
-        log.debug("launching...");
-        log.trace("launching...");
+        vertx.eventBus().registerDefaultCodec(FilesystemEvent::class.java, FilesystemEventCodec())
         val config = BreezeConfiguration()
         val docker = DockerFactory().docker()
         val processFactory = DockerProcessFactory(config, docker)
-        val watcher = FileSystemWatcher()
         val filesService = FilesService(config)
         val filesDataFetcher = FilesDataFetcher(filesService)
-        val gqlFactory = GraphQLFactory(filesService, watcher, processFactory, filesDataFetcher, config)
+        val watcher2 = FilesystemWatcher(vertx, Paths.get(config.workingDirectory))
+        val gqlFactory = GraphQLFactory(vertx.eventBus(), filesService, processFactory, filesDataFetcher, config)
 
         val router: Router = Router.router(vertx)
 
         val graphQL = gqlFactory.graphQL()
         router.route("/graphql").handler(ApolloWSHandler.create(graphQL, ApolloWSOptions().apply {
             keepAlive = 15000L
-        }));
+        }))
 
+        watcher2.watch()
         vertx.createHttpServer()
                 .requestHandler(router::handle)
                 .listen(8080)

@@ -2,7 +2,6 @@ package org.codefreak.breeze.graphql
 
 import org.codefreak.breeze.BreezeConfiguration
 import org.codefreak.breeze.graphql.model.Directory
-import org.codefreak.breeze.graphql.model.File as FileAPIObject
 import org.codefreak.breeze.graphql.model.FileSystemNode
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -11,6 +10,7 @@ import java.nio.file.Paths
 import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.ZoneId
+import org.codefreak.breeze.graphql.model.File as FileAPIObject
 
 class FilesService(
         val config: BreezeConfiguration

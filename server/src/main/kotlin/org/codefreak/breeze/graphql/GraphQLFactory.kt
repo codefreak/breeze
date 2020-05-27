@@ -4,21 +4,21 @@ import com.github.davidmoten.rx2.Strings
 import graphql.GraphQL
 import graphql.execution.SubscriptionExecutionStrategy
 import graphql.scalars.ExtendedScalars
-import graphql.schema.idl.MapEnumValuesProvider
-import graphql.schema.idl.NaturalEnumValuesProvider
 import graphql.schema.idl.RuntimeWiring
 import graphql.schema.idl.SchemaGenerator
 import graphql.schema.idl.SchemaParser
 import graphql.schema.idl.TypeDefinitionRegistry
 import io.reactivex.BackpressureStrategy
 import io.reactivex.Flowable
+import io.vertx.core.eventbus.EventBus
 import org.codefreak.breeze.BreezeConfiguration
-import org.codefreak.breeze.FileSystemWatcher
 import org.codefreak.breeze.graphql.model.Directory
 import org.codefreak.breeze.graphql.model.File
+import org.codefreak.breeze.graphql.model.FileSystemEventType
 import org.codefreak.breeze.graphql.model.ReplType
 import org.codefreak.breeze.shell.Process
 import org.codefreak.breeze.shell.ProcessFactory
+import org.codefreak.breeze.vertx.FilesystemEvent
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.BufferedReader
@@ -26,10 +26,11 @@ import java.io.InputStreamReader
 import java.nio.file.Paths
 import java.util.UUID
 import kotlin.concurrent.thread
+import org.codefreak.breeze.graphql.model.FilesystemEvent as FilesystemEventModel
 
 class GraphQLFactory(
+        private val eventBus: EventBus,
         private val filesService: FilesService,
-        private val watcher: FileSystemWatcher,
         private val processFactory: ProcessFactory,
         private val filesDataFetcher: FilesDataFetcher,
         private val config: BreezeConfiguration
@@ -127,7 +128,20 @@ class GraphQLFactory(
                 .type("Subscription") { typeWiring ->
                     typeWiring.dataFetcher("fileChange") {
                         log.info("Listening on file changes")
-                        Flowable.create(watcher, BackpressureStrategy.BUFFER)
+                        Flowable.create<FilesystemEventModel>({ emitter ->
+                            val consumer = eventBus.consumer<FilesystemEvent>(FilesystemEvent.ADDRESS) { message ->
+                                val event = message.body()
+                                emitter.onNext(FilesystemEventModel(
+                                        event.path.toString(),
+                                        FileSystemEventType.from(event.kind)
+                                ))
+                            }
+
+                            emitter.setCancellable {
+                                log.info("STOP listening on file changes")
+                                consumer.unregister()
+                            }
+                        }, BackpressureStrategy.BUFFER)
                     }
                     typeWiring.dataFetcher("replOutput") {
                         val id = UUID.fromString(it.getArgument("id"))

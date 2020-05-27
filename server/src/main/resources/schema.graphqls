@@ -22,8 +22,8 @@ enum FileSystemEventType {
 }
 
 type FilesystemEvent {
-    type: FileSystemEventType!
     path: String!
+    type: FileSystemEventType!
 }
 
 type Query {
