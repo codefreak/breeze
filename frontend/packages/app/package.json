@@ -42,7 +42,8 @@
     "start": "yarn run generate && craco start",
     "build": "yarn run generate && craco build",
     "test": "craco test",
-    "generate": "graphql-codegen"
+    "generate": "graphql-codegen",
+    "tsc": "tsc"
   },
   "eslintConfig": {
     "extends": "react-app"

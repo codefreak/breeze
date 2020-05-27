@@ -9,9 +9,19 @@ import org.codefreak.breeze.graphql.FilesDataFetcher
 import org.codefreak.breeze.graphql.FilesService
 import org.codefreak.breeze.graphql.GraphQLFactory
 import org.codefreak.breeze.shell.docker.DockerProcessFactory
+import org.slf4j.LoggerFactory
 
 class Application : AbstractVerticle() {
+    companion object {
+        private val log = LoggerFactory.getLogger(Application::class.java)
+    }
+
     override fun start() {
+        log.info("launching...");
+        log.warn("launching...");
+        log.error("launching...");
+        log.debug("launching...");
+        log.trace("launching...");
         val config = BreezeConfiguration()
         val docker = DockerFactory().docker()
         val processFactory = DockerProcessFactory(config, docker)

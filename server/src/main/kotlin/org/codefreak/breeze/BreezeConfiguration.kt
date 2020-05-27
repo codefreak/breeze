@@ -3,7 +3,7 @@ package org.codefreak.breeze
 import java.nio.file.Paths
 
 class BreezeConfiguration {
-    var workingDirectory: String = Paths.get("../test-files")
+    var workingDirectory: String = Paths.get(System.getProperty("java.io.tmpdir")).resolve("breeze-workspace")
             .toAbsolutePath()
             .toString()
 

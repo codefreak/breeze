@@ -6,7 +6,7 @@ import { BreezeComponent } from "../App";
 import { basename } from "path";
 
 import "./Editor.less";
-import { insertAfter, remove } from "../lib/array";
+import { insertAfter, remove } from "../util/array";
 
 // TODO: read backend config
 const DEFAULT_FILE = "/main.py"

@@ -13,7 +13,7 @@
   },
   "scripts": {
     "test": "jest",
-    "build": "tsc"
+    "tsc": "tsc"
   },
   "dependencies": {
     "path-browserify": "^1.0.1"

@@ -16,7 +16,6 @@ import {
 } from "@ant-design/icons";
 import useFiles from "../hooks/useFiles";
 import { TreeProps } from "antd/lib/tree";
-import { insertAfter } from "../lib/array";
 
 const { TreeNode } = Tree;
 

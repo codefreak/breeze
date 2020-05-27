@@ -26,16 +26,19 @@ const Monaco: React.FC<{ path: string }> = ({ path }) => {
     }
   }, [model, data]);
 
-  model.onDidChangeContent(
-    debounce(() => {
-      writeFile({
-        variables: {
-          path,
-          contents: model.getValue(),
-        },
-      });
-    }, 1000)
-  );
+  useEffect(() => {
+    model.onDidChangeContent(
+        debounce(() => {
+          writeFile({
+            variables: {
+              path,
+              contents: model.getValue(),
+            },
+          });
+        }, 1000)
+    );
+
+  }, [writeFile, model])
 
   return (
     <MonacoComp

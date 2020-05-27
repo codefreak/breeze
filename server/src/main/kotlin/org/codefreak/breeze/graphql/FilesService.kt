@@ -4,6 +4,7 @@ import org.codefreak.breeze.BreezeConfiguration
 import org.codefreak.breeze.graphql.model.Directory
 import org.codefreak.breeze.graphql.model.File as FileAPIObject
 import org.codefreak.breeze.graphql.model.FileSystemNode
+import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -15,6 +16,16 @@ class FilesService(
         val config: BreezeConfiguration
 ) {
     val rootPath: Path = Paths.get(config.workingDirectory)
+
+    companion object {
+        private val log = LoggerFactory.getLogger(FilesService::class.java)
+    }
+
+    init {
+        if (!rootPath.toFile().exists()) {
+            rootPath.toFile().mkdirs()
+        }
+    }
 
     fun fileToApiObject(file: File): FileSystemNode? {
         if (!file.exists()) {
@@ -38,6 +49,9 @@ class FilesService(
             file.createNewFile()
         } else if (file.isDirectory) {
             throw RuntimeException("Cannot write content to directory")
+        }
+        if (log.isDebugEnabled) {
+            log.debug("Updating contents of $path")
         }
         file.writeText(content)
         return file
