@@ -11,14 +11,15 @@ import graphql.schema.idl.TypeDefinitionRegistry
 import io.reactivex.BackpressureStrategy
 import io.reactivex.Flowable
 import io.vertx.core.eventbus.EventBus
+import io.vertx.ext.web.handler.graphql.VertxDataFetcher
 import org.codefreak.breeze.BreezeConfiguration
 import org.codefreak.breeze.graphql.model.Directory
 import org.codefreak.breeze.graphql.model.File
 import org.codefreak.breeze.graphql.model.FileSystemEventType
 import org.codefreak.breeze.graphql.model.ReplType
 import org.codefreak.breeze.shell.Process
-import org.codefreak.breeze.shell.ProcessFactory
 import org.codefreak.breeze.vertx.FilesystemEvent
+import org.codefreak.breeze.workspace.Workspace
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.BufferedReader
@@ -31,7 +32,7 @@ import org.codefreak.breeze.graphql.model.FilesystemEvent as FilesystemEventMode
 class GraphQLFactory(
         private val eventBus: EventBus,
         private val filesService: FilesService,
-        private val processFactory: ProcessFactory,
+        private val workspace: Workspace,
         private val filesDataFetcher: FilesDataFetcher,
         private val config: BreezeConfiguration
 ) {
@@ -54,6 +55,7 @@ class GraphQLFactory(
                 )
         )
 
+        val mainProcessUUID = UUID(0, 0)
         val processMap = mutableMapOf<UUID, Process>()
         fun stopProcess(id: UUID): Int {
             val process = processMap.remove(id) ?: return -1
@@ -73,23 +75,23 @@ class GraphQLFactory(
                     }
                 }
                 .type("Mutation") { typeWiring ->
-                    typeWiring.dataFetcher("createRepl") {
-                        val type = ReplType.valueOf(it.getArgumentOrDefault("type", ReplType.DEFAULT.name))
-                        val id = UUID.randomUUID()
-                        log.info("Creating new REPL ($type) with id $id")
-                        val cmd = when (type) {
-                            ReplType.RUN -> config.runCmd
-                            else -> config.replCmd
+                    typeWiring.dataFetcher("createRepl", VertxDataFetcher<UUID> { env, future ->
+                        val type = ReplType.valueOf(env.getArgumentOrDefault("type", ReplType.DEFAULT.name))
+                        if (type === ReplType.DEFAULT) {
+                            workspace.start().onSuccess {
+                                processMap[mainProcessUUID] = it
+                                future.complete(mainProcessUUID)
+                            }
+                        } else {
+                            workspace.exec(config.runCmd).map { process ->
+                                val id = UUID.randomUUID()
+                                processMap[id] = process
+                                process.start()
+                                log.info("Started REPL $id")
+                                future.complete(id)
+                            }
                         }
-                        val shellProcess = processFactory.createProcess(
-                                cmd,
-                                workingDirectory = filesService.rootPath.toAbsolutePath().toString()
-                        )
-                        processMap[id] = shellProcess
-                        shellProcess.start()
-                        log.info("Started REPL $id")
-                        id
-                    }
+                    })
                     typeWiring.dataFetcher("writeRepl") {
                         val id = UUID.fromString(it.getArgument("id"))
                         val process = processMap[id]
@@ -121,7 +123,7 @@ class GraphQLFactory(
                     typeWiring.dataFetcher("file") {
                         val path = Paths.get(it.getArgument<String>("path"))
                         filesService.fileToApiObject(
-                                filesService.getFile(path)
+                                filesService.pathToFile(path)
                         )
                     }
                 }
@@ -153,9 +155,6 @@ class GraphQLFactory(
                             }
                             thread {
                                 Strings.from(BufferedReader(InputStreamReader(process.stdout)))
-                                        .doOnComplete {
-                                            stopProcess(id)
-                                        }
                                         .subscribe(emitter::onNext)
                             }
                         }, BackpressureStrategy.BUFFER)

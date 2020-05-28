@@ -9,11 +9,11 @@ import "./Editor.less";
 import { insertAfter, remove } from "../util/array";
 
 // TODO: read backend config
-const DEFAULT_FILE = "/main.py"
+const DEFAULT_FILE = "/main.py";
 
 const Editor: React.FC = () => {
   const [fileStack, setFileStack] = useState<string[]>([DEFAULT_FILE]);
-  const [currentFile, setCurrentFile] = useState<string>(DEFAULT_FILE);
+  const [currentFile, setCurrentFile] = useState<string>(fileStack[0]);
   return (
     <Row style={{ height: "100%" }}>
       <Col span={7}>
@@ -21,7 +21,9 @@ const Editor: React.FC = () => {
           <FileTree
             onClickFile={(path) => {
               // insert after current opened file
-              setFileStack(insertAfter(fileStack, path, currentFile));
+              if (fileStack.indexOf(path) === -1) {
+                setFileStack(insertAfter(fileStack, path, currentFile));
+              }
               setCurrentFile(path);
             }}
           />
