@@ -11,6 +11,7 @@ import org.codefreak.breeze.graphql.GraphQLFactory
 import org.codefreak.breeze.vertx.FilesystemEvent
 import org.codefreak.breeze.vertx.FilesystemEventCodec
 import org.codefreak.breeze.vertx.FilesystemWatcher
+import org.codefreak.breeze.workspace.LocalWorkspace
 import org.codefreak.breeze.workspace.Workspace
 import org.slf4j.LoggerFactory
 
@@ -20,8 +21,8 @@ class Application : AbstractVerticle() {
     }
 
     private val config = BreezeConfiguration()
-    private val workspace by lazy {
-        Workspace.tmp(vertx)
+    private val workspace: Workspace by lazy {
+        LocalWorkspace.tmp(vertx)
     }
     private val filesService by lazy {
         FilesService(workspace.path)
