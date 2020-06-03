@@ -3,7 +3,6 @@ package org.codefreak.breeze.workspace
 import com.github.dockerjava.api.DockerClient
 import com.github.dockerjava.api.async.ResultCallback
 import com.github.dockerjava.api.exception.DockerException
-import com.github.dockerjava.api.exception.NotModifiedException
 import com.github.dockerjava.api.model.Bind
 import com.github.dockerjava.api.model.HostConfig
 import com.github.dockerjava.api.model.PullResponseItem
@@ -13,7 +12,8 @@ import io.vertx.core.Promise
 import io.vertx.core.Vertx
 import org.codefreak.breeze.BreezeConfiguration
 import org.codefreak.breeze.shell.Process
-import org.codefreak.breeze.shell.docker.DockerProcess
+import org.codefreak.breeze.shell.docker.DockerContainerProcess
+import org.codefreak.breeze.shell.docker.DockerExecProcess
 import org.codefreak.breeze.util.async
 import org.codefreak.breeze.util.tmpdir
 import org.slf4j.LoggerFactory
@@ -56,7 +56,7 @@ class DockerWorkspace(
 
     override fun doStart(): Future<Process> {
         return Future.succeededFuture(
-                DockerProcess(
+                DockerContainerProcess(
                         docker,
                         containerId ?: throw RuntimeException("No containerId")
                 )
@@ -71,8 +71,11 @@ class DockerWorkspace(
         return removeContainer(it)
     }
 
-    override fun doExec(cmd: Array<String>, env: Map<String, String>?): Future<Process> {
-        TODO("Not yet implemented")
+    override fun doExec(cmd: Array<String>, env: Map<String, String>?): Future<Process> = withContainerId { id ->
+        return createExec(id, cmd, env).map { exec ->
+            log.debug("Created exec instance with '${cmd.joinToString(" ")}' on container $id")
+            DockerExecProcess(docker, exec.id)
+        }
     }
 
     private inline fun <T> withContainerId(block: (containerId: String) -> T): T {
@@ -84,7 +87,7 @@ class DockerWorkspace(
         val container = docker.createContainerCmd(imageName)
                 .withCmd(*cmd)
                 .withTty(true)
-                .withEnv(env?.map { "${it.key}=${it.value}" } ?: listOf())
+                .withEnv(env?.toKeyValueList() ?: listOf())
                 .withStdinOpen(true)
                 .withAttachStdout(true)
                 .withHostName(config.replHostname)
@@ -122,6 +125,17 @@ class DockerWorkspace(
         docker.removeContainerCmd(containerId).exec()
     }
 
+    private fun createExec(containerId: String, cmd: Array<String>, env: Map<String, String>?) = async(vertx) {
+        docker.execCreateCmd(containerId)
+                .withCmd(*cmd)
+                .withWorkingDir(config.dockerWorkingdir)
+                .withTty(true)
+                .withAttachStdout(true)
+                .withAttachStdin(true)
+                .withEnv(env?.toKeyValueList() ?: listOf())
+                .exec()
+    }
+
     private fun imageExists(imageName: String): Boolean {
         return try {
             // TODO: async
@@ -139,4 +153,6 @@ class DockerWorkspace(
             "$imageName:latest"
         }
     }
+
+    private fun Map<String, String>.toKeyValueList() = this.map { "${it.key}=${it.value}" }
 }

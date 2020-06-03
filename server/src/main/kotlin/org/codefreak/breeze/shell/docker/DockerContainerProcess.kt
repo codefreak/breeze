@@ -10,12 +10,12 @@ import org.slf4j.LoggerFactory
 import java.io.PipedInputStream
 import java.io.PipedOutputStream
 
-class DockerProcess(
+class DockerContainerProcess(
         private val docker: DockerClient,
         private val containerId: String
 ) : Process {
     companion object {
-        private val log: org.slf4j.Logger = LoggerFactory.getLogger(DockerProcess::class.java)
+        private val log: org.slf4j.Logger = LoggerFactory.getLogger(DockerContainerProcess::class.java)
     }
 
     override val stdin = PipedOutputStream()
@@ -64,15 +64,11 @@ class DockerProcess(
 
     override fun join(): Int {
         var exitCode: Int = -1
-        try {
-            docker.waitContainerCmd(containerId).exec(object : ResultCallback.Adapter<WaitResponse>() {
-                override fun onNext(response: WaitResponse) {
-                    exitCode = response.statusCode
-                }
-            }).awaitCompletion()
-        } catch (e: InterruptedException) {
-            return -1
-        }
+        docker.waitContainerCmd(containerId).exec(object : ResultCallback.Adapter<WaitResponse>() {
+            override fun onNext(response: WaitResponse) {
+                exitCode = response.statusCode
+            }
+        }).awaitCompletion()
         return exitCode
     }
 }

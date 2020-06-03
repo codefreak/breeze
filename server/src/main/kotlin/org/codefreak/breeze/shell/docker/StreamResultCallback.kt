@@ -6,7 +6,10 @@ import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.io.OutputStream
 
-class StreamResultCallback(private val writer: OutputStream) : ResultCallback.Adapter<Frame>() {
+class StreamResultCallback(
+        private val writer: OutputStream,
+        private val onCompleteCallback: () -> Unit = {}
+) : ResultCallback.Adapter<Frame>() {
     companion object {
         private val log: org.slf4j.Logger = LoggerFactory.getLogger(StreamResultCallback::class.java)
     }
@@ -16,7 +19,12 @@ class StreamResultCallback(private val writer: OutputStream) : ResultCallback.Ad
             writer.write(frame.payload)
             writer.flush()
         } catch (e: IOException) {
-            log.warn("Cannot write incoming frame: ${e.message}")
+            log.warn("Cannot write incoming frame:", e)
         }
+    }
+
+    override fun onComplete() {
+        super.onComplete()
+        onCompleteCallback()
     }
 }

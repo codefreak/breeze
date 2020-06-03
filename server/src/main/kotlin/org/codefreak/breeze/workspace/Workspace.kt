@@ -44,17 +44,13 @@ abstract class Workspace(
     protected abstract fun doInit(cmd: Array<String>, env: Map<String, String>? = null): Future<Unit>
 
     fun start(): Future<Process> {
-        if (status === WorkspaceStatus.STARTING || status === WorkspaceStatus.RUNNING) {
-            startupPromise?.let {
-                return it.future()
-            }
-            // TODO: This happens sometime. Why?
-            throw RuntimeException(
-                    """
-                        Workspace is already starting but has no startup promise.
-                        This should never happen. Race condition maybe?
-                    """.trimIndent()
-            )
+        if (status === WorkspaceStatus.STARTING) {
+            return startupPromise?.future()
+                    ?: throw RuntimeException("Workspace is already starting but has no startup promise.")
+        }
+        if (status === WorkspaceStatus.RUNNING) {
+            return mainProcess?.let { Future.succeededFuture(it) }
+                    ?: throw RuntimeException("Workspace is running but has no main process.")
         }
         if (status > WorkspaceStatus.STOPPED) {
             return Future.failedFuture(RuntimeException("Cannot restart a removed environment"))

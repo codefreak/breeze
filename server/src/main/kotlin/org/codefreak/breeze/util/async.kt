@@ -4,7 +4,7 @@ import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.Vertx
 
-fun <T> async(vertx: Vertx, blocking: () -> T): Future<T> {
+inline fun <T> async(vertx: Vertx, crossinline blocking: () -> T): Future<T> {
     val promise = Promise.promise<T>()
     vertx.executeBlocking<T>({
         try {

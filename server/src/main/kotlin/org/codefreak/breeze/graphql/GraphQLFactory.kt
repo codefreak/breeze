@@ -62,7 +62,7 @@ class GraphQLFactory(
         val processMap = mutableMapOf<UUID, Process>()
         fun stopProcess(id: UUID): Future<Int> {
             if (id == MAIN_PROCESS_UID) {
-                return workspace.stop().map(1)
+                return Future.succeededFuture(-1)
             }
 
             val process = processMap.remove(id) ?: return Future.succeededFuture(-1)
@@ -93,6 +93,7 @@ class GraphQLFactory(
                             workspace.exec(config.runCmd).map { process ->
                                 val id = UUID.randomUUID()
                                 processMap[id] = process
+                                log.info("Starting REPL $id")
                                 process.start()
                                 log.info("Started REPL $id")
                                 future.complete(id)
@@ -173,15 +174,18 @@ class GraphQLFactory(
                         val process = processMap[id] ?: throw IllegalArgumentException("No REPL $id")
                         Flowable.create<Int>({ emitter ->
                             val joinThread = thread {
-                                val exitCode = process.join()
-                                log.info("Repl $id finished")
-                                if (!emitter.isCancelled) {
-                                    emitter.onNext(exitCode)
-                                    emitter.onComplete()
+                                try {
+                                    val exitCode = process.join()
+                                    log.info("Repl $id finished")
+                                    if (!emitter.isCancelled) {
+                                        emitter.onNext(exitCode)
+                                        emitter.onComplete()
+                                    }
+                                } catch (e: InterruptedException) {
+                                    log.info("Waiting for REPL $id was cancelled")
                                 }
                             }
                             emitter.setCancellable {
-                                log.info("Cancelling waiting for repl $id")
                                 joinThread.interrupt()
                             }
                         }, BackpressureStrategy.BUFFER).onErrorReturnItem(-1)
