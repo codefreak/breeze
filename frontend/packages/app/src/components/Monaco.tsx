@@ -1,13 +1,20 @@
 import React, { useEffect, useState } from "react";
 import { debounce } from "ts-debounce";
-import MonacoComp from "@monaco-editor/react";
+import MonacoComp, { Monaco as IMonaco } from "@monaco-editor/react";
 import { useGetFileQuery, useWriteFileMutation } from "../generated/graphql";
-import { editor, Uri } from "monaco-editor";
+import { useMonaco } from "../hooks/useMonaco";
+import { editor } from "monaco-editor";
+import { Spin } from "antd";
 
-const Monaco: React.FC<{ path: string }> = ({ path }) => {
+interface MonacoProps {
+  path: string;
+  monaco: IMonaco;
+}
+
+const Monaco: React.FC<MonacoProps> = ({ path, monaco }) => {
   const model =
-    editor.getModel(Uri.file(path)) ||
-    editor.createModel("", undefined, Uri.file(path));
+    monaco.editor.getModel(monaco.Uri.file(path)) ||
+    monaco.editor.createModel("", undefined, monaco.Uri.file(path));
   const { data } = useGetFileQuery({ variables: { path } });
   const [writeFile] = useWriteFileMutation();
   const [monacoInstance, setMonacoInstance] = useState<
@@ -49,4 +56,10 @@ const Monaco: React.FC<{ path: string }> = ({ path }) => {
   );
 };
 
-export default Monaco;
+const MonacoInitWrapper: React.FC<Omit<MonacoProps, "monaco">> = (props) => {
+  const monaco = useMonaco();
+
+  return monaco ? <Monaco monaco={monaco} {...props} /> : <Spin />;
+};
+
+export default MonacoInitWrapper;
