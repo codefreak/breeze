@@ -64,7 +64,9 @@ class FilesService(
         }
     }
 
-    private fun relPath(file: File): String {
-        return rootPath.relativize(file.toPath()).toString()
+    fun relPath(file: File) = relPath(file.toPath())
+
+    fun relPath(path: Path): String {
+        return rootPath.relativize(path).toString()
     }
 }

@@ -142,7 +142,7 @@ class GraphQLFactory(
                             val consumer = eventBus.consumer<FilesystemEvent>(FilesystemEvent.ADDRESS) { message ->
                                 val event = message.body()
                                 emitter.onNext(FilesystemEventModel(
-                                        event.path.toString(),
+                                        filesService.relPath(event.path),
                                         FileSystemEventType.from(event.kind)
                                 ))
                             }

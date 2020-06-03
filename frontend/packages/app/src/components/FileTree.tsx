@@ -7,7 +7,7 @@ import {
   TreeNode as TreeNodeModel,
 } from "@codefreak/tree-utils";
 import { Directory, File } from "../generated/graphql";
-import { basename, resolve } from "path";
+import { basename } from "path";
 import {
   FileOutlined,
   FolderOutlined,
@@ -38,6 +38,7 @@ enum NodeType {
   DIRECTORY = "directory",
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const FileTreeFooter: React.FC = () => {
   const [nodeAddType, setNodeAddType] = useState<NodeType>();
   const inputRef = useRef<Input>(null);
@@ -84,7 +85,7 @@ interface FileTreeProps extends TreeProps {
   onClickFile?: (path: string) => void;
 }
 
-const FileTree: React.FC<FileTreeProps> = ({ onClickFile, ...props }) => {
+const FileTree: React.FC<FileTreeProps> = ({ onClickFile }) => {
   const { loading, data } = useFiles();
 
   if (loading || data === undefined) {
@@ -106,7 +107,7 @@ const FileTree: React.FC<FileTreeProps> = ({ onClickFile, ...props }) => {
       >
         {renderTreeRecursive(tree[0].children)}
       </Tree>
-      { /* <FileTreeFooter /> */ }
+      {/* <FileTreeFooter /> */}
     </div>
   );
 };
