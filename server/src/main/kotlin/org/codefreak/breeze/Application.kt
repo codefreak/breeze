@@ -1,7 +1,6 @@
 package org.codefreak.breeze
 
 import io.vertx.core.AbstractVerticle
-import io.vertx.core.Promise
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.handler.graphql.ApolloWSHandler
 import io.vertx.ext.web.handler.graphql.ApolloWSOptions
@@ -55,16 +54,5 @@ class Application : AbstractVerticle() {
         vertx.createHttpServer()
                 .requestHandler(router::handle)
                 .listen(8080)
-    }
-
-    override fun stop(stopPromise: Promise<Void>) {
-        log.info("Shutdown workspace")
-        workspace.stop().onComplete {
-            log.info("Removing workspace")
-            workspace.remove().onComplete {
-                log.info("Shutdown complete")
-                stopPromise.complete()
-            }
-        }
     }
 }
