@@ -1,9 +1,10 @@
 package org.codefreak.breeze.workspace
 
+import com.pty4j.PtyProcessBuilder
 import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.Vertx
-import org.codefreak.breeze.shell.LocalProcessFactory
+import org.codefreak.breeze.shell.LocalProcess
 import org.codefreak.breeze.shell.Process
 import org.codefreak.breeze.util.tmpdir
 import java.nio.file.Path
@@ -24,7 +25,6 @@ class LocalWorkspace(
         )
     }
 
-    private val processFactory = LocalProcessFactory()
     private var mainProcess: Process? = null
     private var cmd: Array<String>? = null
     private var env: Map<String, String>? = null
@@ -52,9 +52,8 @@ class LocalWorkspace(
         val promise = Promise.promise<Process>()
         vertx.executeBlocking<Process>({
             // TODO: watch process and go to stopped if it ends
-            it.complete(processFactory.createProcess(
+            it.complete(createLocalProcess(
                     cmd ?: throw RuntimeException("No command has be specified"),
-                    path.toString(),
                     env
             ))
         }, {
@@ -89,8 +88,15 @@ class LocalWorkspace(
 
     override fun doExec(cmd: Array<String>, env: Map<String, String>?): Future<Process> {
         // TODO: Store processes and kill all of them on stop
-        return Future.succeededFuture(
-                processFactory.createProcess(cmd, path.toString(), env)
-        )
+        return Future.succeededFuture(createLocalProcess(cmd, env))
+    }
+
+    private fun createLocalProcess(cmd: Array<String>, env: Map<String, String>?): Process {
+        val ptyProcess = PtyProcessBuilder()
+                .setCommand(cmd)
+                .setEnvironment(env)
+                .setDirectory(path.toString())
+                .start()
+        return LocalProcess(ptyProcess)
     }
 }

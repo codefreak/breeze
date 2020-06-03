@@ -10,6 +10,7 @@ import graphql.schema.idl.SchemaParser
 import graphql.schema.idl.TypeDefinitionRegistry
 import io.reactivex.BackpressureStrategy
 import io.reactivex.Flowable
+import io.vertx.core.Future
 import io.vertx.core.eventbus.EventBus
 import io.vertx.ext.web.handler.graphql.VertxDataFetcher
 import org.codefreak.breeze.BreezeConfiguration
@@ -36,7 +37,10 @@ class GraphQLFactory(
         private val filesDataFetcher: FilesDataFetcher,
         private val config: BreezeConfiguration
 ) {
-    private val log: Logger = LoggerFactory.getLogger(this::class.java)
+    companion object {
+        private val MAIN_PROCESS_UID = UUID(0, 0)
+        private val log: Logger = LoggerFactory.getLogger(this::class.java)
+    }
 
     fun graphQL(): GraphQL {
         val schemaParser = SchemaParser()
@@ -55,12 +59,15 @@ class GraphQLFactory(
                 )
         )
 
-        val mainProcessUUID = UUID(0, 0)
         val processMap = mutableMapOf<UUID, Process>()
-        fun stopProcess(id: UUID): Int {
-            val process = processMap.remove(id) ?: return -1
+        fun stopProcess(id: UUID): Future<Int> {
+            if (id == MAIN_PROCESS_UID) {
+                return workspace.stop().map(1)
+            }
+
+            val process = processMap.remove(id) ?: return Future.succeededFuture(-1)
             log.info("Killing process $id. ${processMap.size} processes left")
-            return process.close()
+            return Future.succeededFuture(process.close())
         }
 
         val runtimeWiring = RuntimeWiring.newRuntimeWiring()
@@ -79,8 +86,8 @@ class GraphQLFactory(
                         val type = ReplType.valueOf(env.getArgumentOrDefault("type", ReplType.DEFAULT.name))
                         if (type === ReplType.DEFAULT) {
                             workspace.start().onSuccess {
-                                processMap[mainProcessUUID] = it
-                                future.complete(mainProcessUUID)
+                                processMap[MAIN_PROCESS_UID] = it
+                                future.complete(MAIN_PROCESS_UID)
                             }
                         } else {
                             workspace.exec(config.runCmd).map { process ->
@@ -150,12 +157,14 @@ class GraphQLFactory(
                         val process = processMap[id] ?: throw IllegalArgumentException("No REPL $id")
                         Flowable.create<String>({ emitter ->
                             log.info("Subscribing for data of shell $id")
-                            emitter.setCancellable {
-                                stopProcess(id)
-                            }
-                            thread {
+                            val stdoutThread = thread {
                                 Strings.from(BufferedReader(InputStreamReader(process.stdout)))
+                                        .onErrorReturnItem("\u0000")
                                         .subscribe(emitter::onNext)
+                            }
+                            emitter.setCancellable {
+                                stdoutThread.interrupt()
+                                stopProcess(id)
                             }
                         }, BackpressureStrategy.BUFFER)
                     }

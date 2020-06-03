@@ -5,13 +5,14 @@ import io.vertx.core.Promise
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.handler.graphql.ApolloWSHandler
 import io.vertx.ext.web.handler.graphql.ApolloWSOptions
+import org.codefreak.breeze.docker.DockerFactory
 import org.codefreak.breeze.graphql.FilesDataFetcher
 import org.codefreak.breeze.graphql.FilesService
 import org.codefreak.breeze.graphql.GraphQLFactory
 import org.codefreak.breeze.vertx.FilesystemEvent
 import org.codefreak.breeze.vertx.FilesystemEventCodec
 import org.codefreak.breeze.vertx.FilesystemWatcher
-import org.codefreak.breeze.workspace.LocalWorkspace
+import org.codefreak.breeze.workspace.DockerWorkspace
 import org.codefreak.breeze.workspace.Workspace
 import org.slf4j.LoggerFactory
 
@@ -21,8 +22,9 @@ class Application : AbstractVerticle() {
     }
 
     private val config = BreezeConfiguration()
+    private val docker = DockerFactory().docker()
     private val workspace: Workspace by lazy {
-        LocalWorkspace.tmp(vertx)
+        DockerWorkspace(vertx, config, docker)
     }
     private val filesService by lazy {
         FilesService(workspace.path)
@@ -31,7 +33,6 @@ class Application : AbstractVerticle() {
     override fun start() {
         vertx.eventBus().registerDefaultCodec(FilesystemEvent::class.java, FilesystemEventCodec())
 
-        //val docker = DockerFactory().docker()
         log.info("Initializing workspace")
         workspace.init(config.replCmd, config.defaultEnv)
         log.info("Starting workspace")

@@ -17,6 +17,7 @@ repositories {
 dependencies {
     // Vert.x
     implementation "io.vertx:vertx-core:$vertxVersion"
+    implementation "io.vertx:vertx-lang-kotlin:$vertxVersion"
     implementation "io.vertx:vertx-web:$vertxVersion"
     implementation "io.vertx:vertx-web-graphql:$vertxVersion"
     implementation "org.slf4j:slf4j-simple:1.7.30"

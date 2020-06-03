@@ -4,19 +4,28 @@ import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.Vertx
 import org.codefreak.breeze.shell.Process
+import org.slf4j.LoggerFactory
 import java.nio.file.Path
+import kotlin.properties.Delegates
 
 /**
  * This abstract workspace class is only responsible for state management
+ * TODO: make thread safe
  */
 abstract class Workspace(
         protected val vertx: Vertx,
         val path: Path,
         private val remove: Boolean
 ) {
-    var status: WorkspaceStatus = WorkspaceStatus.UNDEFINED
-        private set
+    companion object {
+        private val log: org.slf4j.Logger = LoggerFactory.getLogger(Workspace::class.java)
+    }
 
+    private var status: WorkspaceStatus by Delegates.observable(WorkspaceStatus.UNDEFINED) { _, old, new ->
+        log.debug("Workspace status changed: $old -> $new")
+    }
+
+    private var mainProcess: Process? = null
     private val creationPromise: Promise<Unit> = Promise.promise()
     private var startupPromise: Promise<Process>? = null
     private val stopPromise: Promise<Unit> = Promise.promise()
@@ -35,25 +44,35 @@ abstract class Workspace(
     protected abstract fun doInit(cmd: Array<String>, env: Map<String, String>? = null): Future<Unit>
 
     fun start(): Future<Process> {
-        startupPromise?.let {
-            return it.future()
+        if (status === WorkspaceStatus.STARTING || status === WorkspaceStatus.RUNNING) {
+            startupPromise?.let {
+                return it.future()
+            }
+            // TODO: This happens sometime. Why?
+            throw RuntimeException(
+                    """
+                        Workspace is already starting but has no startup promise.
+                        This should never happen. Race condition maybe?
+                    """.trimIndent()
+            )
         }
         if (status > WorkspaceStatus.STOPPED) {
             return Future.failedFuture(RuntimeException("Cannot restart a removed environment"))
         }
-        status = if (status > WorkspaceStatus.RUNNING) {
-            WorkspaceStatus.RESTARTING
-        } else {
-            WorkspaceStatus.STARTING
+        val promise = Promise.promise<Process>()
+        startupPromise = promise
+        status = when {
+            status > WorkspaceStatus.RUNNING -> WorkspaceStatus.RESTARTING
+            else -> WorkspaceStatus.STARTING
         }
-        return Promise.promise<Process>().also { promise ->
-            startupPromise = promise
-            doStart().onSuccess() {
-                status = WorkspaceStatus.RUNNING
-                startupPromise = null
-                promise.complete(it)
-            }
-        }.future()
+        doStart().onSuccess {
+            status = WorkspaceStatus.RUNNING
+            it.start()
+            mainProcess = it
+            promise.complete(it)
+            startupPromise = null
+        }
+        return promise.future()
     }
 
     protected abstract fun doStart(): Future<Process>
@@ -68,6 +87,7 @@ abstract class Workspace(
         status = WorkspaceStatus.STOPPING
         doStop().onComplete {
             status = WorkspaceStatus.STOPPED
+            mainProcess = null
         }
         return stopPromise.future()
     }
