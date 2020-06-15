@@ -1,5 +1,6 @@
 package org.codefreak.breeze.workspace
 
+import com.google.inject.Singleton
 import com.pty4j.PtyProcessBuilder
 import io.vertx.core.Future
 import io.vertx.core.Promise
@@ -9,6 +10,7 @@ import org.codefreak.breeze.shell.Process
 import org.codefreak.breeze.util.tmpdir
 import java.nio.file.Path
 
+@Singleton
 class LocalWorkspace(
         vertx: Vertx,
         path: Path,

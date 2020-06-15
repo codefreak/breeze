@@ -17,10 +17,14 @@ repositories {
 dependencies {
     // Vert.x
     implementation "io.vertx:vertx-core:$vertxVersion"
+    implementation "io.vertx:vertx-config:$vertxVersion"
     implementation "io.vertx:vertx-lang-kotlin:$vertxVersion"
     implementation "io.vertx:vertx-web:$vertxVersion"
     implementation "io.vertx:vertx-web-graphql:$vertxVersion"
     implementation "org.slf4j:slf4j-simple:1.7.30"
+
+    // DI w/ Google Guice
+    implementation 'com.englishtown.vertx:vertx-guice:2.3.1'
 
     // Kotlin
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion"
@@ -45,7 +49,8 @@ dependencies {
 
 vertx {
     redeploy = false
-    mainVerticle = "org.codefreak.breeze.Application"
+    mainVerticle = "java-guice:org.codefreak.breeze.GraphqlServerVerticle"
+    config = "src/main/resources/conf/config.json"
 }
 
 test {

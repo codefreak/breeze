@@ -1,5 +1,8 @@
 package org.codefreak.breeze
 
+import com.google.inject.Singleton
+
+@Singleton
 class BreezeConfiguration {
     var replHostname = "breeze"
     var replDockerImage = "python:3.8.2-buster"

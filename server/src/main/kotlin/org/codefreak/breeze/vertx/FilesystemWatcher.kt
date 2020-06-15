@@ -1,6 +1,9 @@
 package org.codefreak.breeze.vertx
 
+import com.google.inject.Inject
+import com.google.inject.Singleton
 import io.vertx.core.Vertx
+import org.codefreak.breeze.workspace.Workspace
 import org.slf4j.LoggerFactory
 import java.io.FileFilter
 import java.nio.file.FileSystems
@@ -8,10 +11,11 @@ import java.nio.file.Path
 import java.nio.file.StandardWatchEventKinds
 import java.nio.file.WatchEvent
 
-class FilesystemWatcher(
+@Singleton
+class FilesystemWatcher
+@Inject constructor(
         private val vertx: Vertx,
-        private val root: Path,
-        private val pollRate: Long = 100L
+        workspace: Workspace
 ) {
     companion object {
         private val log = LoggerFactory.getLogger(FilesystemWatcher::class.java)
@@ -24,6 +28,8 @@ class FilesystemWatcher(
         )
     }
 
+    private var pollRate = 100L
+    private val root = workspace.path
     private var watching = false
     private val watchService = FileSystems.getDefault().newWatchService()
     private val eventBus = vertx.eventBus()

@@ -1,8 +1,10 @@
 package org.codefreak.breeze.vertx
 
+import com.google.inject.Singleton
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.eventbus.MessageCodec
 
+@Singleton
 class FilesystemEventCodec : MessageCodec<FilesystemEvent, FilesystemEvent> {
     override fun decodeFromWire(pos: Int, buffer: Buffer): FilesystemEvent {
         throw RuntimeException("Cannot send FilesystemEvent across the wire yet")

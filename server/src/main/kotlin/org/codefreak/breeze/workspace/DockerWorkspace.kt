@@ -7,6 +7,8 @@ import com.github.dockerjava.api.model.Bind
 import com.github.dockerjava.api.model.HostConfig
 import com.github.dockerjava.api.model.PullResponseItem
 import com.github.dockerjava.api.model.Volume
+import com.google.inject.Inject
+import com.google.inject.Singleton
 import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.Vertx
@@ -18,7 +20,9 @@ import org.codefreak.breeze.util.async
 import org.codefreak.breeze.util.tmpdir
 import org.slf4j.LoggerFactory
 
-class DockerWorkspace(
+@Singleton
+class DockerWorkspace
+@Inject constructor(
         vertx: Vertx,
         private val config: BreezeConfiguration,
         private val docker: DockerClient
