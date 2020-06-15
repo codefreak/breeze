@@ -36,7 +36,7 @@ enum REPLType {
 }
 
 type Mutation {
-    writeFile(path: String!, contents: String!): FileSystemNode!
+    writeFile(path: String!, contents: String!): File!
 
     createRepl(type: REPLType): ID!
     killRepl(id: ID!): Int

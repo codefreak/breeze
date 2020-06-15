@@ -1,0 +1,7 @@
+package org.codefreak.breeze.graphql
+
+import graphql.kickstart.tools.GraphQLMutationResolver
+import graphql.kickstart.tools.GraphQLQueryResolver
+import graphql.kickstart.tools.GraphQLSubscriptionResolver
+
+interface BreezeResolver: GraphQLQueryResolver, GraphQLMutationResolver, GraphQLSubscriptionResolver

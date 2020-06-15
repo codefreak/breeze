@@ -25,6 +25,7 @@ dependencies {
 
     // DI w/ Google Guice
     implementation 'com.englishtown.vertx:vertx-guice:2.3.1'
+    implementation 'com.google.inject.extensions:guice-multibindings:4.2.3'
 
     // Kotlin
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion"
@@ -34,8 +35,8 @@ dependencies {
     implementation "org.jetbrains.pty4j:pty4j:0.9.6"
 
     // GraphQL
-    implementation "com.graphql-java:graphql-java:14.0"
     implementation "com.graphql-java:graphql-java-extended-scalars:1.0"
+    implementation "com.graphql-java-kickstart:graphql-java-tools:6.0.2"
 
     // Docker
     implementation "com.github.docker-java:docker-java:3.2.1"
