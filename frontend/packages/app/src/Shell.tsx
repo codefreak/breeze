@@ -1,67 +1,67 @@
-import React, { useEffect, useState } from "react";
-import { Terminal } from "xterm";
-import useReplWriteData from "./hooks/useReplWriteData";
-import XTerm from "./components/XTerm";
-import useReplOutput from "./hooks/useReplOutput";
-import useReplExit from "./hooks/useReplExit";
-import useTerminalBuffer from "./hooks/useTerminalBuffer";
+import React, { useEffect, useState } from 'react'
+import { Terminal } from 'xterm'
+import useReplWriteData from './hooks/useReplWriteData'
+import XTerm from './components/XTerm'
+import useReplOutput from './hooks/useReplOutput'
+import useReplExit from './hooks/useReplExit'
+import useTerminalBuffer from './hooks/useTerminalBuffer'
 
 export interface ShellProps {
-  replId: string;
+  replId: string
   onExit?: (
     terminal: Terminal,
     exitCode: number,
     purgeBuffer: () => void
-  ) => void;
+  ) => void
 }
 
 const Shell: React.FC<ShellProps> = ({ replId, onExit }) => {
-  const [exitCode, setExitCode] = useState<number>();
-  const [terminal, setTerminal] = useState<Terminal>();
-  const { buffer, appendBuffer, purgeBuffer } = useTerminalBuffer(replId);
-  const [initialized, setInitialized] = useState<boolean>(false);
-  const [writeData] = useReplWriteData(replId);
+  const [exitCode, setExitCode] = useState<number>()
+  const [terminal, setTerminal] = useState<Terminal>()
+  const { buffer, appendBuffer, purgeBuffer } = useTerminalBuffer(replId)
+  const [initialized, setInitialized] = useState<boolean>(false)
+  const [writeData] = useReplWriteData(replId)
 
   useReplOutput(
     replId,
-    (data) => {
+    data => {
       if (terminal && exitCode === undefined) {
-        terminal.write(data);
-        appendBuffer(data);
+        terminal.write(data)
+        appendBuffer(data)
       }
     },
     { skip: !terminal }
-  );
+  )
 
-  useReplExit(replId, setExitCode, { skip: !terminal });
+  useReplExit(replId, setExitCode, { skip: !terminal })
 
   useEffect(() => {
     if (exitCode !== undefined && terminal && onExit) {
-      onExit(terminal, exitCode, purgeBuffer);
+      onExit(terminal, exitCode, purgeBuffer)
     }
-  }, [terminal, exitCode, onExit, purgeBuffer]);
+  }, [terminal, exitCode, onExit, purgeBuffer])
 
   useEffect(() => {
     if (terminal) {
       // TODO: make resize work again
       //resize(terminal.cols, terminal.rows);
       const event = terminal.onData((data: string) => {
-        writeData(data);
-      });
-      return () => event.dispose();
+        writeData(data)
+      })
+      return () => event.dispose()
     }
-  }, [terminal, writeData]);
+  }, [terminal, writeData])
 
   //
   useEffect(() => {
     if (!initialized && terminal) {
-      terminal.write(buffer);
-      setInitialized(true);
+      terminal.write(buffer)
+      setInitialized(true)
     }
-  }, [terminal, buffer, setInitialized, initialized]);
+  }, [terminal, buffer, setInitialized, initialized])
 
   // TODO: "key" is used to force re-render
-  return <XTerm key={replId} onReady={setTerminal} />;
-};
+  return <XTerm key={replId} onReady={setTerminal} />
+}
 
-export default Shell;
+export default Shell

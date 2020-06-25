@@ -1,9 +1,9 @@
 import {
   ReplOutputSubscription,
   ReplOutputSubscriptionVariables,
-  useReplOutputSubscription,
-} from "../generated/graphql";
-import * as ApolloReactHooks from "@apollo/react-hooks";
+  useReplOutputSubscription
+} from '../generated/graphql'
+import * as ApolloReactHooks from '@apollo/react-hooks'
 
 const useReplOutput = (
   id: string,
@@ -16,12 +16,12 @@ const useReplOutput = (
   useReplOutputSubscription({
     ...additionalOptions,
     variables: { id },
-    onSubscriptionData: (sub) => {
+    onSubscriptionData: sub => {
       if (sub.subscriptionData.data?.replOutput) {
-        onData(sub.subscriptionData.data?.replOutput);
+        onData(sub.subscriptionData.data?.replOutput)
       }
     }
-  });
-};
+  })
+}
 
-export default useReplOutput;
+export default useReplOutput

@@ -1,9 +1,9 @@
 import {
   ReplWaitSubscription,
   ReplWaitSubscriptionVariables,
-  useReplWaitSubscription,
-} from "../generated/graphql";
-import * as ApolloReactHooks from "@apollo/react-hooks";
+  useReplWaitSubscription
+} from '../generated/graphql'
+import * as ApolloReactHooks from '@apollo/react-hooks'
 
 const useReplExit = (
   id: string,
@@ -16,12 +16,12 @@ const useReplExit = (
   useReplWaitSubscription({
     ...additionalOptions,
     variables: { id },
-    onSubscriptionData: (sub) => {
+    onSubscriptionData: sub => {
       if (sub.subscriptionData.data?.replWait !== undefined) {
-        onExit(sub.subscriptionData.data?.replWait);
+        onExit(sub.subscriptionData.data?.replWait)
       }
     }
-  });
-};
+  })
+}
 
-export default useReplExit;
+export default useReplExit

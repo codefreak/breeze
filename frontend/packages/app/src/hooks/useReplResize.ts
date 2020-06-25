@@ -1,11 +1,11 @@
-import { useResizeReplMutation } from "../generated/graphql";
+import { useResizeReplMutation } from '../generated/graphql'
 
 const useReplResize = (id: string) => {
-  const [resizeShell, results] = useResizeReplMutation();
+  const [resizeShell, results] = useResizeReplMutation()
   const resize = (cols: number, rows: number) =>
-    resizeShell({ variables: { id, cols, rows } });
+    resizeShell({ variables: { id, cols, rows } })
 
-  return [resize, results];
-};
+  return [resize, results]
+}
 
-export default useReplResize;
+export default useReplResize

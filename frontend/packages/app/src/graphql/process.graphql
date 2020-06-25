@@ -1,19 +1,19 @@
 mutation CreateRepl($type: REPLType!) {
-    createRepl(type: $type)
+  createRepl(type: $type)
 }
 
 mutation WriteReplData($id: ID!, $data: String!) {
-    writeRepl(id: $id, data: $data)
+  writeRepl(id: $id, data: $data)
 }
 
 mutation ResizeRepl($id: ID!, $cols: Int!, $rows: Int!) {
-    resizeRepl(id: $id, cols: $cols, rows: $rows)
+  resizeRepl(id: $id, cols: $cols, rows: $rows)
 }
 
 subscription ReplOutput($id: ID!) {
-    replOutput(id: $id)
+  replOutput(id: $id)
 }
 
 subscription ReplWait($id: ID!) {
-    replWait(id: $id)
+  replWait(id: $id)
 }

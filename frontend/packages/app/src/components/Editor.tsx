@@ -1,30 +1,30 @@
-import React, { useState } from "react";
-import { Col, Row, Tabs } from "antd";
-import FileTree from "./FileTree";
-import Monaco from "./Monaco";
-import { BreezeComponent } from "../App";
-import { basename } from "path";
+import React, { useState } from 'react'
+import { Col, Row, Tabs } from 'antd'
+import FileTree from './FileTree'
+import Monaco from './Monaco'
+import { BreezeComponent } from '../App'
+import { basename } from 'path'
 
-import "./Editor.less";
-import { insertAfter, remove } from "../util/array";
+import './Editor.less'
+import { insertAfter, remove } from '../util/array'
 
 // TODO: read backend config
-const DEFAULT_FILE = "/main.py";
+const DEFAULT_FILE = '/main.py'
 
 const Editor: React.FC = () => {
-  const [fileStack, setFileStack] = useState<string[]>([DEFAULT_FILE]);
-  const [currentFile, setCurrentFile] = useState<string>(fileStack[0]);
+  const [fileStack, setFileStack] = useState<string[]>([DEFAULT_FILE])
+  const [currentFile, setCurrentFile] = useState<string>(fileStack[0])
   return (
-    <Row style={{ height: "100%" }}>
+    <Row style={{ height: '100%' }}>
       <Col span={7}>
         <BreezeComponent title="Files">
           <FileTree
-            onClickFile={(path) => {
+            onClickFile={path => {
               // insert after current opened file
               if (fileStack.indexOf(path) === -1) {
-                setFileStack(insertAfter(fileStack, path, currentFile));
+                setFileStack(insertAfter(fileStack, path, currentFile))
               }
-              setCurrentFile(path);
+              setCurrentFile(path)
             }}
           />
         </BreezeComponent>
@@ -39,22 +39,22 @@ const Editor: React.FC = () => {
           activeKey={currentFile ? currentFile : undefined}
           onTabClick={setCurrentFile}
           onEdit={(targetKey, action) => {
-            if (action === "remove") {
-              const path = targetKey.toString();
-              const newFileStack = remove(fileStack, path);
+            if (action === 'remove') {
+              const path = targetKey.toString()
+              const newFileStack = remove(fileStack, path)
               // select another file if current one is closed
               if (currentFile === path) {
                 const newFileIndex = Math.min(
                   fileStack.indexOf(currentFile),
                   newFileStack.length - 1
-                );
-                setCurrentFile(newFileStack[newFileIndex]);
+                )
+                setCurrentFile(newFileStack[newFileIndex])
               }
-              setFileStack(newFileStack);
+              setFileStack(newFileStack)
             }
           }}
         >
-          {fileStack.map((file) => (
+          {fileStack.map(file => (
             <Tabs.TabPane key={file} tab={basename(file)} />
           ))}
         </Tabs>
@@ -65,7 +65,7 @@ const Editor: React.FC = () => {
         )}
       </Col>
     </Row>
-  );
-};
+  )
+}
 
-export default Editor;
+export default Editor

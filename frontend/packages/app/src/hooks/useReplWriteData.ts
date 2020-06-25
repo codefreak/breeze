@@ -1,26 +1,26 @@
 import {
   useWriteReplDataMutation,
-  WriteReplDataMutationResult,
-} from "../generated/graphql";
-import { useCallback } from "react";
+  WriteReplDataMutationResult
+} from '../generated/graphql'
+import { useCallback } from 'react'
 
 interface MutationWriter {
-  (data: string): void;
+  (data: string): void
 }
 
 const useReplWriteData = (
   id: string
 ): [MutationWriter, WriteReplDataMutationResult] => {
-  const [writeShellData, result] = useWriteReplDataMutation();
+  const [writeShellData, result] = useWriteReplDataMutation()
 
   const writer = useCallback(
     (data: string) => {
-      return writeShellData({ variables: { id, data } });
+      return writeShellData({ variables: { id, data } })
     },
     [id, writeShellData]
-  );
+  )
 
-  return [writer, result];
-};
+  return [writer, result]
+}
 
-export default useReplWriteData;
+export default useReplWriteData

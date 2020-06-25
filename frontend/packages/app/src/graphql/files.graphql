@@ -1,33 +1,33 @@
 query GetFiles {
-    files {
-        modified
-        path
-    }
+  files {
+    modified
+    path
+  }
 }
 
 query GetFile($path: String!) {
-    file(path: $path) {
-        ... on File {
-            contents
-            modified
-            path
-        }
+  file(path: $path) {
+    ... on File {
+      contents
+      modified
+      path
     }
+  }
 }
 
 mutation WriteFile($path: String!, $contents: String!) {
-    writeFile(path: $path, contents: $contents) {
-        modified
-        path
-        ... on File {
-            contents
-        }
+  writeFile(path: $path, contents: $contents) {
+    modified
+    path
+    ... on File {
+      contents
     }
+  }
 }
 
 subscription FileChanged {
-    fileChange {
-        path
-        type
-    }
+  fileChange {
+    path
+    type
+  }
 }
