@@ -4,15 +4,22 @@ import useReplWriteData from "./hooks/useReplWriteData";
 import XTerm from "./components/XTerm";
 import useReplOutput from "./hooks/useReplOutput";
 import useReplExit from "./hooks/useReplExit";
+import useTerminalBuffer from "./hooks/useTerminalBuffer";
 
 export interface ShellProps {
   replId: string;
-  onExit?: (terminal: Terminal, exitCode: number) => void;
+  onExit?: (
+    terminal: Terminal,
+    exitCode: number,
+    purgeBuffer: () => void
+  ) => void;
 }
 
 const Shell: React.FC<ShellProps> = ({ replId, onExit }) => {
   const [exitCode, setExitCode] = useState<number>();
   const [terminal, setTerminal] = useState<Terminal>();
+  const { buffer, appendBuffer, purgeBuffer } = useTerminalBuffer(replId);
+  const [initialized, setInitialized] = useState<boolean>(false);
   const [writeData] = useReplWriteData(replId);
 
   useReplOutput(
@@ -20,6 +27,7 @@ const Shell: React.FC<ShellProps> = ({ replId, onExit }) => {
     (data) => {
       if (terminal && exitCode === undefined) {
         terminal.write(data);
+        appendBuffer(data);
       }
     },
     { skip: !terminal }
@@ -29,19 +37,28 @@ const Shell: React.FC<ShellProps> = ({ replId, onExit }) => {
 
   useEffect(() => {
     if (exitCode !== undefined && terminal && onExit) {
-      onExit(terminal, exitCode)
+      onExit(terminal, exitCode, purgeBuffer);
     }
-  }, [terminal, exitCode, onExit]);
+  }, [terminal, exitCode, onExit, purgeBuffer]);
 
   useEffect(() => {
     if (terminal) {
       // TODO: make resize work again
       //resize(terminal.cols, terminal.rows);
-      terminal.onData((data: string) => {
+      const event = terminal.onData((data: string) => {
         writeData(data);
       });
+      return () => event.dispose();
     }
   }, [terminal, writeData]);
+
+  //
+  useEffect(() => {
+    if (!initialized && terminal) {
+      terminal.write(buffer);
+      setInitialized(true);
+    }
+  }, [terminal, buffer, setInitialized, initialized]);
 
   // TODO: "key" is used to force re-render
   return <XTerm key={replId} onReady={setTerminal} />;

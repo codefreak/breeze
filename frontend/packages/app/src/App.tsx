@@ -71,12 +71,18 @@ const App: React.FC<IAppProps> = ({ subClient }) => {
     });
   };
 
-  const onRunExit = (terminal: Terminal, exitCode: number) => {
+  const onRunExit = (
+    terminal: Terminal,
+    exitCode: number,
+    purgeBuffer: () => void
+  ) => {
     terminal.writeln(`\nProcess finished with exit code ${exitCode}`);
     terminal.writeln("Press any key to continue...");
     terminal.onData(() => {
       setRunId(undefined);
       setRunning(false);
+      // clear local stored data of buffer
+      purgeBuffer();
     });
   };
 
@@ -120,7 +126,7 @@ const App: React.FC<IAppProps> = ({ subClient }) => {
       </Header>
       <Content>
         <Row style={{ height: "100%", overflow: "hidden" }}>
-          <Col span={14} style={{height: "100%"}}>
+          <Col span={14} style={{ height: "100%" }}>
             <Editor />
           </Col>
           <Col span={10}>
