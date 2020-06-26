@@ -9,18 +9,18 @@ const useTerminalBuffer = (name: string) => {
     (data: string) => {
       const newBuffer = buffer + data
       setBuffer(newBuffer)
-      localStorage.setItem(getStorageKey(name), newBuffer)
+      sessionStorage.setItem(getStorageKey(name), newBuffer)
     },
     [buffer, setBuffer, name]
   )
 
   const purgeBuffer = useCallback(() => {
-    localStorage.removeItem(getStorageKey(name))
+    sessionStorage.removeItem(getStorageKey(name))
   }, [name])
 
   useEffect(() => {
     // handle name change
-    setBuffer(localStorage[getStorageKey(name)] || '')
+    setBuffer(sessionStorage[getStorageKey(name)] || '')
   }, [name])
 
   return { appendBuffer, buffer, setBuffer, purgeBuffer }
