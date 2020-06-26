@@ -5,8 +5,9 @@ import XTerm from './components/XTerm'
 import useReplOutput from './hooks/useReplOutput'
 import useReplExit from './hooks/useReplExit'
 import useTerminalBuffer from './hooks/useTerminalBuffer'
+import withConfig, { WithConfigProps } from './util/withConfig'
 
-export interface ShellProps {
+export interface ShellProps extends WithConfigProps {
   replId: string
   onExit?: (
     terminal: Terminal,
@@ -15,10 +16,12 @@ export interface ShellProps {
   ) => void
 }
 
-const Shell: React.FC<ShellProps> = ({ replId, onExit }) => {
+const Shell: React.FC<ShellProps> = ({ config, replId, onExit }) => {
   const [exitCode, setExitCode] = useState<number>()
   const [terminal, setTerminal] = useState<Terminal>()
-  const { buffer, appendBuffer, purgeBuffer } = useTerminalBuffer(replId)
+  const { buffer, appendBuffer, purgeBuffer } = useTerminalBuffer(
+    config.instanceId + ':' + replId
+  )
   const [initialized, setInitialized] = useState<boolean>(false)
   const [writeData] = useReplWriteData(replId)
 
@@ -64,4 +67,4 @@ const Shell: React.FC<ShellProps> = ({ replId, onExit }) => {
   return <XTerm key={replId} onReady={setTerminal} />
 }
 
-export default Shell
+export default withConfig<typeof Shell, ShellProps>(Shell)

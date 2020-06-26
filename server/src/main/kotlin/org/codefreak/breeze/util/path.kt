@@ -6,6 +6,6 @@ import java.util.UUID
 /**
  * Return the path to a random tmp directory
  */
-fun tmpdir() = Paths.get(System.getProperty("java.io.tmpdir"))
-        .resolve(UUID.randomUUID().toString())
+fun tmpdir(name: String = UUID.randomUUID().toString()) = Paths.get(System.getProperty("java.io.tmpdir"))
+        .resolve(name)
         .toAbsolutePath()

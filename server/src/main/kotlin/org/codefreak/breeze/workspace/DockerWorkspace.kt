@@ -26,7 +26,7 @@ class DockerWorkspace
         vertx: Vertx,
         private val config: BreezeConfiguration,
         private val docker: DockerClient
-) : Workspace(vertx, tmpdir(), true) {
+) : Workspace(vertx, tmpdir(config.instanceId), true) {
     companion object {
         private val log: org.slf4j.Logger = LoggerFactory.getLogger(DockerWorkspace::class.java)
     }

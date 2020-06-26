@@ -4,6 +4,7 @@ import com.google.inject.Singleton
 
 @Singleton
 class BreezeConfiguration {
+    val instanceId: String = java.util.UUID.randomUUID().toString()
     var replHostname = "breeze"
     var replDockerImage = "python:3.8.2-buster"
     var dockerWorkingdir = "/code"

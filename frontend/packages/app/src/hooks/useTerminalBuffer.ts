@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 
-const getStorageKey = (name: string) => `breeze-buffer-${name}`
+const getStorageKey = (name: string) => `breeze-buffer:${name}`
 
 const useTerminalBuffer = (name: string) => {
   const [buffer, setBuffer] = useState<string>('')

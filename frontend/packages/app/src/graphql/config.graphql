@@ -1,0 +1,5 @@
+query UseConfig {
+  config {
+    instanceId
+  }
+}

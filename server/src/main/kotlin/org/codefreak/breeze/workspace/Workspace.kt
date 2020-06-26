@@ -6,6 +6,7 @@ import io.vertx.core.Vertx
 import org.codefreak.breeze.shell.Process
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
+import java.util.UUID
 import kotlin.properties.Delegates
 
 /**

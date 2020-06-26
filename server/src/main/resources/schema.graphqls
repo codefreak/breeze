@@ -26,9 +26,14 @@ type FilesystemEvent {
     type: FileSystemEventType!
 }
 
+type Config {
+    instanceId: String!
+}
+
 type Query {
     files: [FileSystemNode!]!
     file(path: String!): FileSystemNode
+    config: Config!
 }
 
 enum REPLType {

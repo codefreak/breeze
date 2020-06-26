@@ -12,6 +12,7 @@ import com.google.inject.TypeLiteral
 import com.google.inject.multibindings.Multibinder
 import graphql.GraphQL
 import graphql.kickstart.tools.GraphQLResolver
+import org.codefreak.breeze.graphql.ConfigResolver
 import org.codefreak.breeze.graphql.FileResolver
 import org.codefreak.breeze.graphql.GraphQLFactory
 import org.codefreak.breeze.graphql.ReplResolver
@@ -43,6 +44,7 @@ class GraphqlServerBinder : AbstractModule() {
         Multibinder.newSetBinder(binder(), object : TypeLiteral<GraphQLResolver<*>>() {}).apply {
             addBinding().to(ReplResolver::class.java)
             addBinding().to(FileResolver::class.java)
+            addBinding().to(ConfigResolver::class.java)
         }
     }
 }
