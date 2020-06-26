@@ -1,13 +1,18 @@
 import React, { useEffect, useState } from 'react'
-import { Col, Layout, Row, Spin, Button } from 'antd'
+import { Alert, Button, Col, Layout, message, Row, Spin } from 'antd'
 import { PlaySquareFilled } from '@ant-design/icons'
 import Shell from './Shell'
 import { ReplType, useCreateReplMutation } from './generated/graphql'
 import { Terminal } from 'xterm'
+import { WarningOutlined } from '@ant-design/icons'
 
 import './App.less'
-import { SubscriptionClient } from 'subscriptions-transport-ws'
 import Editor from './components/Editor'
+import ConnectionStatusBadge from './ConnectionStatusBadge'
+import {
+  ConnectionStatus,
+  useConnectionStatus
+} from './ConnectionStatusProvider'
 
 const { Header, Content, Footer } = Layout
 
@@ -20,13 +25,10 @@ export const BreezeComponent: React.FC<{ title: string }> = props => {
   )
 }
 
-interface AppProps {
-  subClient: SubscriptionClient
-}
+interface AppProps {}
 
-const App: React.FC<AppProps> = ({ subClient }) => {
-  const [connected, setConnected] = useState<boolean>(false)
-  const [connecting, setConnecting] = useState<boolean>(true)
+const App: React.FC<AppProps> = () => {
+  const connectionStatus = useConnectionStatus()
   const [replId, setReplId] = useState<string>()
   const [running, setRunning] = useState(false)
   const [runId, setRunId] = useState<string>()
@@ -45,22 +47,6 @@ const App: React.FC<AppProps> = ({ subClient }) => {
       })
     }
   }, [replId, createDefaultRepl])
-
-  useEffect(() => {
-    const connected = () => {
-      setConnected(true)
-      setConnecting(false)
-    }
-    const connecting = () => {
-      setConnected(false)
-      setConnecting(true)
-    }
-    subClient.onConnected(connected)
-    subClient.onReconnected(connected)
-    subClient.onConnecting(connecting)
-    subClient.onDisconnected(() => setConnected(false))
-    subClient.onReconnecting(connecting)
-  }, [subClient])
 
   const onRunClick = () => {
     setRunning(true)
@@ -101,7 +87,7 @@ const App: React.FC<AppProps> = ({ subClient }) => {
         }}
       >
         <Row>
-          <Col span={12}>
+          <Col span={8}>
             <h1 style={{ color: 'white' }}>
               <img
                 src={process.env.PUBLIC_URL + '/breeze-logo.svg'}
@@ -112,7 +98,21 @@ const App: React.FC<AppProps> = ({ subClient }) => {
               breeze
             </h1>
           </Col>
-          <Col span={12} style={{ textAlign: 'right' }}>
+          <Col span={8} style={{ textAlign: 'center' }}>
+            {connectionStatus !== ConnectionStatus.CONNECTED && (
+              <Alert
+                type="warning"
+                icon={<WarningOutlined />}
+                showIcon
+                message="You are currently disconnected!"
+                style={{
+                  marginTop: 10,
+                  display: 'inline-block'
+                }}
+              />
+            )}
+          </Col>
+          <Col span={8} style={{ textAlign: 'right' }}>
             <Button
               icon={<PlaySquareFilled />}
               onClick={onRunClick}
@@ -143,8 +143,9 @@ const App: React.FC<AppProps> = ({ subClient }) => {
         </Row>
       </Content>
       <Footer className="footer">
-        {connected ? 'Connected' : 'Disconnected!'}
-        {!connected && connecting ? 'Connecting…' : null}
+        <div className="footer-item">
+          <ConnectionStatusBadge />
+        </div>
       </Footer>
     </Layout>
   )

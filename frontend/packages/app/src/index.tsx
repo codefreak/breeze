@@ -7,6 +7,7 @@ import { WebSocketLink } from 'apollo-link-ws'
 import { ApolloProvider } from '@apollo/react-hooks'
 import { ApolloClient, InMemoryCache } from 'apollo-boost'
 import { SubscriptionClient } from 'subscriptions-transport-ws'
+import ConnectionStatusProvider from './ConnectionStatusProvider'
 
 const subClient = new SubscriptionClient('ws://localhost:3000/graphql', {
   reconnect: true,
@@ -23,7 +24,9 @@ const client = new ApolloClient({
 ReactDOM.render(
   <React.StrictMode>
     <ApolloProvider client={client}>
-      <App subClient={subClient} />
+      <ConnectionStatusProvider subClient={subClient}>
+        <App />
+      </ConnectionStatusProvider>
     </ApolloProvider>
   </React.StrictMode>,
   document.getElementById('root')
