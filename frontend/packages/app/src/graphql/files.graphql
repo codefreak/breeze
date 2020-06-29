@@ -9,8 +9,6 @@ query GetFile($path: String!) {
   file(path: $path) {
     ... on File {
       contents
-      modified
-      path
     }
   }
 }
@@ -22,6 +20,18 @@ mutation WriteFile($path: String!, $contents: String!) {
     ... on File {
       contents
     }
+  }
+}
+
+mutation CreateFile($path: String!) {
+  createFile(path: $path) {
+    path
+  }
+}
+
+mutation CreateDirectory($path: String!) {
+  createDirectory(path: $path) {
+    path
   }
 }
 

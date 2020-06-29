@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Alert, Button, Col, Layout, message, Row, Spin } from 'antd'
+import { Alert, Button, Col, Layout, Row, Spin } from 'antd'
 import { PlaySquareFilled } from '@ant-design/icons'
 import Shell from './Shell'
 import { ReplType, useCreateReplMutation } from './generated/graphql'

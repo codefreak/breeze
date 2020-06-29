@@ -47,16 +47,37 @@ class FilesService
     }
 
     fun writeFile(path: Path, content: String): File {
+        val file = createFile(path)
+        if (log.isDebugEnabled) {
+            log.debug("Writing to $path")
+        }
+        file.writeText(content)
+        return file
+    }
+
+    fun createFile(path: Path): File {
+        return touch(path).also {
+            if (it.isDirectory) {
+                throw RuntimeException("Cannot write content to directory")
+            }
+        }
+    }
+
+    fun touch(path: Path): File {
         val file = pathToFile(path)
         if (!file.exists()) {
             file.createNewFile()
-        } else if (file.isDirectory) {
-            throw RuntimeException("Cannot write content to directory")
         }
-        if (log.isDebugEnabled) {
-            log.debug("Updating contents of $path")
+        return file
+    }
+
+    fun mkdirs(path: Path): File {
+        val file = pathToFile(path)
+        if (!file.exists()) {
+            file.mkdirs()
+        } else if (!file.isDirectory) {
+            throw RuntimeException("$path already exists and is not a directory")
         }
-        file.writeText(content)
         return file
     }
 

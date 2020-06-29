@@ -42,6 +42,11 @@ enum REPLType {
 
 type Mutation {
     writeFile(path: String!, contents: String!): File!
+    createFile(path: String!): File!
+    createDirectory(path: String!): Directory!
+    #unlink(path: String!): Boolean!
+    #move(source: String!, target: String!): FileSystemNode!
+    #copy(soruce: String!, target: String!): FileSystemNode!
 
     createRepl(type: REPLType): ID!
     killRepl(id: ID!): Int

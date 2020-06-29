@@ -1,5 +1,11 @@
 import { Spin, Tree, Button, Input } from 'antd'
-import React, { useEffect, useRef, useState } from 'react'
+import React, {
+  KeyboardEventHandler,
+  useCallback,
+  useEffect,
+  useRef,
+  useState
+} from 'react'
 import './FileTree.less'
 import {
   listToTreeByPath,
@@ -16,6 +22,7 @@ import {
 } from '@ant-design/icons'
 import useFiles from '../hooks/useFiles'
 import { TreeProps } from 'antd/lib/tree'
+import { CheckOutlined, LoadingOutlined } from '@ant-design/icons/lib'
 
 const { TreeNode } = Tree
 
@@ -33,21 +40,58 @@ const renderTreeRecursive = (nodes: TreeNodeModel<Fileish>[]) => {
   })
 }
 
-enum NodeType {
+export enum NodeType {
   FILE = 'file',
   DIRECTORY = 'directory'
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const FileTreeFooter: React.FC = () => {
+export interface FileTreeAdderProps {
+  onCreate?: (type: NodeType, name: string) => Promise<void>
+}
+
+const FileTreeAdder: React.FC<FileTreeAdderProps> = ({ onCreate }) => {
   const [nodeAddType, setNodeAddType] = useState<NodeType>()
   const inputRef = useRef<Input>(null)
+  const [name, setName] = useState<string>('')
+  const [loading, setLoading] = useState<boolean>(false)
+
+  const reset = useCallback(() => {
+    setName('')
+    setNodeAddType(undefined)
+    setLoading(false)
+  }, [setName, setLoading, setNodeAddType])
 
   useEffect(() => {
     if (inputRef.current) {
       inputRef.current.focus()
     }
   }, [inputRef, nodeAddType])
+
+  const create = useCallback(() => {
+    if (onCreate && nodeAddType && name.trim()) {
+      setLoading(true)
+      onCreate(nodeAddType, name)
+        .then(reset)
+        .catch(() => {
+          setLoading(false)
+        })
+    } else {
+      reset()
+    }
+  }, [onCreate, setLoading, reset, nodeAddType, name])
+
+  const onKeyPress = useCallback<KeyboardEventHandler>(
+    e => {
+      if (e.keyCode === 27) {
+        // ESC
+        reset()
+      } else if (e.keyCode === 13) {
+        // Enter
+        create()
+      }
+    },
+    [reset, create]
+  )
 
   return (
     <div className="file-tree-footer">
@@ -61,9 +105,19 @@ const FileTreeFooter: React.FC = () => {
                 <FolderOutlined />
               )
             }
+            suffix={
+              loading ? (
+                <LoadingOutlined />
+              ) : (
+                <CheckOutlined onClick={name.trim() ? create : undefined} />
+              )
+            }
             placeholder={`Enter name for new ${nodeAddType}…`}
             size="small"
             ref={inputRef}
+            onKeyDown={onKeyPress}
+            value={name}
+            onChange={event => setName(event.target.value)}
           />
         </div>
       )}
@@ -81,11 +135,11 @@ const FileTreeFooter: React.FC = () => {
   )
 }
 
-interface FileTreeProps extends TreeProps {
-  onClickFile?: (path: string) => void
+export interface FileTreeProps extends TreeProps {
+  onCreate?: FileTreeAdderProps['onCreate']
 }
 
-const FileTree: React.FC<FileTreeProps> = ({ onClickFile }) => {
+const FileTree: React.FC<FileTreeProps> = ({ onCreate, ...treeProps }) => {
   const { loading, data } = useFiles()
 
   if (loading || data === undefined) {
@@ -99,15 +153,11 @@ const FileTree: React.FC<FileTreeProps> = ({ onClickFile }) => {
         defaultExpandedKeys={['/']}
         showIcon={true}
         className=""
-        onClick={(_, node) => {
-          if (onClickFile && node.isLeaf) {
-            onClickFile(node.key.toString())
-          }
-        }}
+        {...treeProps}
       >
         {renderTreeRecursive(tree[0].children)}
       </Tree>
-      {/* <FileTreeFooter /> */}
+      <FileTreeAdder onCreate={onCreate} />
     </div>
   )
 }

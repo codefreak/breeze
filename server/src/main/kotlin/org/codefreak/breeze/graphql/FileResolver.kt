@@ -8,6 +8,7 @@ import graphql.kickstart.tools.GraphQLSubscriptionResolver
 import io.reactivex.BackpressureStrategy
 import io.reactivex.Flowable
 import io.vertx.core.Vertx
+import org.codefreak.breeze.graphql.model.Directory
 import org.codefreak.breeze.graphql.model.File
 import org.codefreak.breeze.graphql.model.FileSystemEventType
 import org.codefreak.breeze.graphql.model.FileSystemNode
@@ -52,6 +53,18 @@ class FileResolver
         return filesService.fileToApiObject(
                 filesService.writeFile(Paths.get(path), contents)
         ) as File
+    }
+
+    fun createFile(path: String): File {
+        return filesService.fileToApiObject(
+                filesService.createFile(Paths.get(path))
+        ) as File
+    }
+
+    fun createDirectory(path: String): Directory {
+        return filesService.fileToApiObject(
+                filesService.mkdirs(Paths.get(path))
+        ) as Directory
     }
 
     fun fileChange(): Publisher<FilesystemEventModel> {
