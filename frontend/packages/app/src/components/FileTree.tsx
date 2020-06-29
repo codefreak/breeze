@@ -151,6 +151,7 @@ const FileTree: React.FC<FileTreeProps> = ({ onCreate, ...treeProps }) => {
     <div className="breeze-file-tree">
       <Tree
         defaultExpandedKeys={['/']}
+        blockNode
         showIcon={true}
         className=""
         {...treeProps}

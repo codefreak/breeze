@@ -83,7 +83,7 @@ const Editor: React.FC = () => {
     <Row style={{ height: '100%' }}>
       <Col span={7}>
         <BreezeComponent title="Files">
-          <FileTree onClick={onClick} onCreate={onCreateFile} draggable />
+          <FileTree onClick={onClick} onCreate={onCreateFile} />
         </BreezeComponent>
       </Col>
       <Col span={17}>
