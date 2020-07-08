@@ -47,7 +47,9 @@ class DockerExecProcess(
     }
 
     override fun resize(cols: Int, rows: Int) {
-        log.warn("Resizing docker exec processes is not supported")
+        docker.resizeExecCmd(execId)
+                .withSize(rows, cols)
+                .exec()
     }
 
     override fun join(): Int {

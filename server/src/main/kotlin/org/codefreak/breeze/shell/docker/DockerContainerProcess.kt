@@ -59,7 +59,9 @@ class DockerContainerProcess(
     }
 
     override fun resize(cols: Int, rows: Int) {
-        // should be available with next docker-java release
+        docker.resizeContainerCmd(containerId)
+                .withSize(rows, cols)
+                .exec()
     }
 
     override fun join(): Int {

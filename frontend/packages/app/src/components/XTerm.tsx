@@ -4,11 +4,12 @@ import { FitAddon } from 'xterm-addon-fit'
 import { debounce } from 'ts-debounce'
 import './XTerm.less'
 
-interface XTermProps {
+export interface XTermProps {
   onReady?: (terminal: Terminal) => void
+  onResize?: (rows: number, cols: number) => void
 }
 
-const XTerm: React.FC<XTermProps> = ({ onReady }) => {
+const XTerm: React.FC<XTermProps> = ({ onReady, onResize }) => {
   const [shellRootRef, setShellRootRef] = useState<HTMLDivElement>()
   const [terminal, setTerminal] = useState<Terminal>()
 
@@ -28,9 +29,11 @@ const XTerm: React.FC<XTermProps> = ({ onReady }) => {
       terminal.loadAddon(fitAddon)
       fitAddon.fit()
       const resizeHandler = debounce(() => {
-        console.log('Resize')
         fitAddon.fit()
-      }, 50)
+        if (onResize) {
+          onResize(terminal.rows, terminal.cols)
+        }
+      }, 100)
       window.addEventListener('resize', resizeHandler)
 
       if (onReady) {
@@ -41,7 +44,7 @@ const XTerm: React.FC<XTermProps> = ({ onReady }) => {
         window.removeEventListener('resize', resizeHandler)
       }
     }
-  }, [terminal, onReady])
+  }, [terminal, onReady, onResize])
 
   const createShellRootRef = useCallback((ref: any) => {
     setShellRootRef(ref)

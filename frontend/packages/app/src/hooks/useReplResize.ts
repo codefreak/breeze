@@ -1,9 +1,21 @@
-import { useResizeReplMutation } from '../generated/graphql'
+import {
+  ResizeReplMutationResult,
+  useResizeReplMutation
+} from '../generated/graphql'
+import { useCallback } from 'react'
 
-const useReplResize = (id: string) => {
+type UseReplResizeResult = [
+  (rows: number, cols: number) => void,
+  ResizeReplMutationResult
+]
+
+const useReplResize = (id: string): UseReplResizeResult => {
   const [resizeShell, results] = useResizeReplMutation()
-  const resize = (cols: number, rows: number) =>
-    resizeShell({ variables: { id, cols, rows } })
+  const resize = useCallback(
+    (rows: number, cols: number) =>
+      resizeShell({ variables: { id, cols, rows } }),
+    [resizeShell, id]
+  )
 
   return [resize, results]
 }

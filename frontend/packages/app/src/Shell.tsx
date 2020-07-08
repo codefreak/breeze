@@ -6,6 +6,7 @@ import useReplOutput from './hooks/useReplOutput'
 import useReplExit from './hooks/useReplExit'
 import useTerminalBuffer from './hooks/useTerminalBuffer'
 import withConfig, { WithConfigProps } from './util/withConfig'
+import useReplResize from './hooks/useReplResize'
 
 export interface ShellProps extends WithConfigProps {
   replId: string
@@ -18,6 +19,7 @@ export interface ShellProps extends WithConfigProps {
 
 const Shell: React.FC<ShellProps> = ({ config, replId, onExit }) => {
   const [exitCode, setExitCode] = useState<number>()
+  const [resize] = useReplResize(replId)
   const [terminal, setTerminal] = useState<Terminal>()
   const { buffer, appendBuffer, purgeBuffer } = useTerminalBuffer(
     config.instanceId + ':' + replId
@@ -46,8 +48,6 @@ const Shell: React.FC<ShellProps> = ({ config, replId, onExit }) => {
 
   useEffect(() => {
     if (terminal) {
-      // TODO: make resize work again
-      //resize(terminal.cols, terminal.rows);
       const event = terminal.onData((data: string) => {
         writeData(data)
       })
@@ -55,16 +55,18 @@ const Shell: React.FC<ShellProps> = ({ config, replId, onExit }) => {
     }
   }, [terminal, writeData])
 
-  //
   useEffect(() => {
     if (!initialized && terminal) {
+      // trigger initial resize
+      if (resize) resize(terminal.rows, terminal.cols)
+      // writing local stored buffer into terminal
       terminal.write(buffer)
       setInitialized(true)
     }
-  }, [terminal, buffer, setInitialized, initialized])
+  }, [terminal, buffer, setInitialized, initialized, resize])
 
   // TODO: "key" is used to force re-render
-  return <XTerm key={replId} onReady={setTerminal} />
+  return <XTerm key={replId} onReady={setTerminal} onResize={resize} />
 }
 
 export default withConfig<typeof Shell, ShellProps>(Shell)
