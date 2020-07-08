@@ -34,6 +34,14 @@ class GraphqlServerVerticle
     override fun start() {
         vertx.eventBus().registerDefaultCodec(FilesystemEvent::class.java, FilesystemEventCodec())
 
+        config.containerId.let {
+            if (it != null) {
+                log.info("Running inside container with id $it")
+            } else {
+                log.info("Not running inside a container")
+            }
+        }
+
         log.info("Initializing workspace")
         workspace.init(config.replCmd, config.defaultEnv)
         log.info("Starting workspace")

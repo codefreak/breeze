@@ -47,7 +47,7 @@ dependencies {
 vertx {
     redeploy = false
     mainVerticle = "java-guice:org.codefreak.breeze.GraphqlServerVerticle"
-    config = "conf/config.json"
+    config = "src/main/resources/conf/config.json"
 }
 
 test {
@@ -97,6 +97,9 @@ jib {
         ports = ["8080"]
         // set image build date to current timestamp
         creationTime = "USE_CURRENT_TIMESTAMP"
+        volumes = [
+                "/workspace"
+        ]
     }
 }
 tasks.jibDockerBuild.dependsOn deployFrontend

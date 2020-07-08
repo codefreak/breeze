@@ -1,13 +1,15 @@
 package org.codefreak.breeze
 
 import com.google.inject.Singleton
+import org.codefreak.breeze.util.getSurroundingContainerId
 
 @Singleton
 class BreezeConfiguration {
     val instanceId: String = java.util.UUID.randomUUID().toString()
     var replHostname = "breeze"
     var replDockerImage = "python:3.8.2-buster"
-    var dockerWorkingdir = "/code"
+    var workspacePath = "/workspace"
+    var dockerWorkingdir = workspacePath
     var mainFile = "main.py"
     var mainFileContent = """
         def main():
@@ -25,4 +27,5 @@ class BreezeConfiguration {
 
     // TODO: substitution of commands? or pass to /bin/bash -c to parse environment variables
     var runCmd = arrayOf("/usr/bin/env", "python", mainFile)
+    var containerId = getSurroundingContainerId()
 }

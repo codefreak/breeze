@@ -17,8 +17,10 @@ import org.codefreak.breeze.shell.Process
 import org.codefreak.breeze.shell.docker.DockerContainerProcess
 import org.codefreak.breeze.shell.docker.DockerExecProcess
 import org.codefreak.breeze.util.async
+import org.codefreak.breeze.util.getSurroundingContainerId
 import org.codefreak.breeze.util.tmpdir
 import org.slf4j.LoggerFactory
+import java.nio.file.Paths
 
 @Singleton
 class DockerWorkspace
@@ -26,7 +28,11 @@ class DockerWorkspace
         vertx: Vertx,
         private val config: BreezeConfiguration,
         private val docker: DockerClient
-) : Workspace(vertx, tmpdir(config.instanceId), true) {
+) : Workspace(
+        vertx,
+        path = if (getSurroundingContainerId() == null) tmpdir(config.instanceId) else Paths.get(config.workspacePath),
+        remove = true
+) {
     companion object {
         private val log: org.slf4j.Logger = LoggerFactory.getLogger(DockerWorkspace::class.java)
     }
@@ -40,7 +46,7 @@ class DockerWorkspace
         }
 
         val promise = Promise.promise<Unit>()
-        // create temporary dir
+        // create workspace directory
         vertx.fileSystem().mkdirs(path.toString()) {
             if (it.succeeded()) {
                 promise.complete()
@@ -88,6 +94,8 @@ class DockerWorkspace
 
     private fun createContainer(imageName: String, cmd: Array<String>, env: Map<String, String>?) = async(vertx) {
         val volume = Volume(config.dockerWorkingdir)
+        val workspaceSource = getWorkspaceDirBindSource()
+        log.info("Mounting $workspaceSource to ${config.dockerWorkingdir}")
         val container = docker.createContainerCmd(imageName)
                 .withCmd(*cmd)
                 .withTty(true)
@@ -96,14 +104,16 @@ class DockerWorkspace
                 .withAttachStdout(true)
                 .withHostName(config.replHostname)
                 .withWorkingDir(config.dockerWorkingdir)
-                // todo: prepare proper named volumes and share them between docker instances
                 .withVolumes(volume)
-                .withHostConfig(HostConfig.newHostConfig().apply {
-                    withBinds(Bind(path.toString(), volume))
-                })
+                .withHostConfig(
+                        HostConfig.newHostConfig()
+                                .withBinds(
+                                        Bind(workspaceSource, volume)
+                                )
+                )
                 .exec()
-
         containerId = container.id
+        log.info("Created workspace container $containerId")
     }
 
     private fun pullDockerImage(imageName: String) = async(vertx) {
@@ -155,6 +165,34 @@ class DockerWorkspace
             imageName
         } else {
             "$imageName:latest"
+        }
+    }
+
+    /**
+     * When mounting the /workspace volume there are three possibilities:
+     * 1. We are running outside of Docker --> bind the temporary dir from the host
+     * 2. We are running inside Docker and /workspace is a named volume --> bind the named volume
+     * 3. We are running inside Docker and /workspace is a bind-mount from the host --> also bind the host dir
+     */
+    private fun getWorkspaceDirBindSource(): String {
+        val ownContainerId = config.containerId
+        if (ownContainerId == null) {
+            // create simple bind-mount of the tmp dir in case we are running Breeze outside of a container
+            return path.toString()
+        } else {
+            // mount workspace volume from this container to the repl
+            val containerInfo = docker.inspectContainerCmd(ownContainerId).exec()
+            val workspaceMount = containerInfo.mounts?.find { it.destination?.path == config.workspacePath }
+                    ?: throw RuntimeException("This container has no mount at ${config.workspacePath}")
+
+            // either use the volume name or the absolute path as volume source
+            workspaceMount.name?.let {
+                return it
+            }
+            workspaceMount.source?.let {
+                return it
+            }
+            throw RuntimeException("Could not determine the mount source for ${config.workspacePath}")
         }
     }
 
