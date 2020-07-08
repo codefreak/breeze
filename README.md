@@ -26,9 +26,14 @@ Breeze could also be used to provide quick testing environments for new programm
 ## Show me a demo!
 There is no public demo yet, but you can try Breeze locally with Docker. Here are some examples, all of them use official images from Docker Hub.
 
+All the local demos will use the Docker daemon itself to spin up necessary sidecar containers. The UI is accessible
+at `http://localhost:8080`.
+
 ### Python 3.8
 ```shell script
 docker run --rm -it -v${PWD}:/workspace \
+   -v /var/run/docker.sock:/var/run/docker.sock \
+   -p 8080:8080 \
    cfreak/breeze \
    --image=python:3.8 \
    --main-file=main.py \
@@ -40,6 +45,8 @@ docker run --rm -it -v${PWD}:/workspace \
 ### Raw Ubuntu 20.04 LTS
 ```shell script
 docker run --rm -it \
+   -v /var/run/docker.sock:/var/run/docker.sock \
+   -p 8080:8080 \
    cfreak/breeze \
    --image=ubuntu:20.04 \
    --repl-cmd=bash

@@ -7,10 +7,10 @@ import io.vertx.core.AbstractVerticle
 import io.vertx.core.http.HttpMethod
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.handler.CorsHandler
+import io.vertx.ext.web.handler.StaticHandler
 import io.vertx.ext.web.handler.graphql.ApolloWSHandler
 import io.vertx.ext.web.handler.graphql.ApolloWSOptions
 import io.vertx.ext.web.handler.graphql.GraphQLHandler
-import io.vertx.ext.web.handler.graphql.GraphQLHandlerOptions
 import org.codefreak.breeze.graphql.FilesService
 import org.codefreak.breeze.vertx.FilesystemEvent
 import org.codefreak.breeze.vertx.FilesystemEventCodec
@@ -43,6 +43,9 @@ class GraphqlServerVerticle
 
         val router: Router = Router.router(vertx)
         router.route().handler(CorsHandler.create("*").allowedMethods(setOf(HttpMethod.GET)))
+
+        // Handle static resources from React in production builds
+        router.get().handler(StaticHandler.create())
 
         router.route("/graphql").handler(ApolloWSHandler.create(graphQL, ApolloWSOptions().apply {
             keepAlive = 15000L

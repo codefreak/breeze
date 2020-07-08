@@ -12,7 +12,6 @@ import org.codefreak.breeze.graphql.model.Config
 @Singleton
 class ConfigResolver
 @Inject constructor(
-        vertx: Vertx,
         private val config: BreezeConfiguration
 ) : GraphQLQueryResolver, GraphQLMutationResolver {
 

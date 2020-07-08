@@ -1,0 +1,18 @@
+plugins {
+    id "com.github.node-gradle.node" version "2.2.4"
+}
+
+node {
+    // only download on CI systems
+    download = System.getenv('CI') != null
+}
+
+task assemble(type: YarnTask) {
+    args = ['tsc']
+    dependsOn yarn_install
+}
+
+task bundle(type: YarnTask) {
+    args = ['run', 'build']
+    dependsOn yarn_install
+}

@@ -1,0 +1,10 @@
+allprojects {
+    repositories {
+        mavenCentral()
+    }
+}
+
+subprojects {
+    group "org.codefreak.breeze"
+    version "1.0.0"
+}

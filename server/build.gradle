@@ -3,20 +3,16 @@ plugins {
     id "org.jetbrains.kotlin.kapt" version "1.3.70"
     id "org.jetbrains.kotlin.plugin.allopen" version "1.3.70"
     id "io.vertx.vertx-plugin" version "1.0.3"
+    id 'com.google.cloud.tools.jib' version '2.4.0'
 }
 
-version "1.0.0"
-group "org.codefreak.breeze"
-
 repositories {
-    mavenCentral()
     // for pty4j
     maven { url "https://jcenter.bintray.com" }
 }
 
 dependencies {
-    // Vert.x
-    implementation "io.vertx:vertx-core:$vertxVersion"
+    // Vert.x (core is automatically applied by vertx-plugin)
     implementation "io.vertx:vertx-config:$vertxVersion"
     implementation "io.vertx:vertx-lang-kotlin:$vertxVersion"
     implementation "io.vertx:vertx-web:$vertxVersion"
@@ -51,7 +47,7 @@ dependencies {
 vertx {
     redeploy = false
     mainVerticle = "java-guice:org.codefreak.breeze.GraphqlServerVerticle"
-    config = "src/main/resources/conf/config.json"
+    config = "conf/config.json"
 }
 
 test {
@@ -72,3 +68,35 @@ compileTestKotlin {
 	    javaParameters = true 
 	}
 }
+
+task deployFrontend(type: Copy) {
+    from project(':frontend').file('packages/app/build')
+    // webroot is the default for the StaticHandler of Vertx
+    into file('build/resources/main/webroot')
+    dependsOn ':frontend:bundle'
+}
+
+jib {
+    from {
+        image = "openjdk:8-jre-alpine"
+    }
+    to {
+        image = "cfreak/breeze"
+    }
+    container {
+        entrypoint = [
+                "java",
+                "-cp",
+                "/app/resources:/app/classes:/app/libs/*",
+                "io.vertx.core.Launcher",
+                "run",
+                "java-guice:org.codefreak.breeze.GraphqlServerVerticle",
+                "--conf",
+                "/app/resources/conf/config.json"
+        ]
+        ports = ["8080"]
+        // set image build date to current timestamp
+        creationTime = "USE_CURRENT_TIMESTAMP"
+    }
+}
+tasks.jibDockerBuild.dependsOn deployFrontend
