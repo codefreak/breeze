@@ -1,6 +1,6 @@
 import {
-  useWriteReplDataMutation,
-  WriteReplDataMutationResult
+  useWriteProcessDataMutation,
+  WriteProcessDataMutationResult
 } from '../generated/graphql'
 import { useCallback } from 'react'
 
@@ -8,10 +8,10 @@ interface MutationWriter {
   (data: string): void
 }
 
-const useReplWriteData = (
+const useProcessWriteData = (
   id: string
-): [MutationWriter, WriteReplDataMutationResult] => {
-  const [writeShellData, result] = useWriteReplDataMutation()
+): [MutationWriter, WriteProcessDataMutationResult] => {
+  const [writeShellData, result] = useWriteProcessDataMutation()
 
   const writer = useCallback(
     (data: string) => {
@@ -23,4 +23,4 @@ const useReplWriteData = (
   return [writer, result]
 }
 
-export default useReplWriteData
+export default useProcessWriteData

@@ -1,19 +1,19 @@
-mutation CreateRepl($type: REPLType!) {
-  createRepl(type: $type)
+mutation CreateProcess($type: ProcessType!) {
+  createProcess(type: $type)
 }
 
-mutation WriteReplData($id: ID!, $data: String!) {
-  writeRepl(id: $id, data: $data)
+mutation WriteProcessData($id: ID!, $data: String!) {
+  writeProcess(id: $id, data: $data)
 }
 
-mutation ResizeRepl($id: ID!, $cols: Int!, $rows: Int!) {
-  resizeRepl(id: $id, cols: $cols, rows: $rows)
+mutation ResizeProcess($id: ID!, $cols: Int!, $rows: Int!) {
+  resizeProcess(id: $id, cols: $cols, rows: $rows)
 }
 
-subscription ReplOutput($id: ID!) {
-  replOutput(id: $id)
+subscription ProcessOutput($id: ID!) {
+  processOutput(id: $id)
 }
 
-subscription ReplWait($id: ID!) {
-  replWait(id: $id)
+subscription ProcessWait($id: ID!) {
+  processWait(id: $id)
 }

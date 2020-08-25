@@ -24,7 +24,7 @@ class GraphqlServerVerticle
         private val workspace: Workspace,
         private val config: BreezeConfiguration,
         private val filesService: FilesService,
-        private val watcher: FilesystemWatcher,
+        private val filesystemWatcher: FilesystemWatcher,
         private val graphQL: GraphQL
 ) : AbstractVerticle() {
     companion object {
@@ -43,7 +43,7 @@ class GraphqlServerVerticle
         }
 
         log.info("Initializing workspace")
-        workspace.init(config.replCmd, config.defaultEnv)
+        workspace.create(config.workspaceReplCmd, config.defaultEnv)
         log.info("Starting workspace")
 
         log.info("Initializing default file ${config.mainFile}")
@@ -51,16 +51,14 @@ class GraphqlServerVerticle
 
         val router: Router = Router.router(vertx)
         router.route().handler(CorsHandler.create("*").allowedMethods(setOf(HttpMethod.GET)))
-
         // Handle static resources from React in production builds
         router.get().handler(StaticHandler.create())
-
         router.route("/graphql").handler(ApolloWSHandler.create(graphQL, ApolloWSOptions().apply {
             keepAlive = 15000L
         }))
         router.route("/graphql").handler(GraphQLHandler.create(graphQL))
 
-        watcher.watch()
+        filesystemWatcher.watch()
         vertx.createHttpServer()
                 .requestHandler(router::handle)
                 .listen(8080)

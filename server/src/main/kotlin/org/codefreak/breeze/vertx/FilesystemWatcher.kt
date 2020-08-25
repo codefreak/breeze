@@ -50,7 +50,7 @@ class FilesystemWatcher
                 val kind = event.kind()
                 val absolute = parent.resolve(path)
 
-                // new node might be a directory. Try to watch it
+                // new node might be a directory. Try to observe it
                 if (kind == StandardWatchEventKinds.ENTRY_CREATE) {
                     watchPathRecursively(absolute)
                 }

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { Alert, Button, Col, Layout, Row, Spin } from 'antd'
 import { PlaySquareFilled } from '@ant-design/icons'
 import Shell from './Shell'
-import { ReplType, useCreateReplMutation } from './generated/graphql'
+import { ProcessType, useCreateProcessMutation } from './generated/graphql'
 import { Terminal } from 'xterm'
 import { WarningOutlined } from '@ant-design/icons'
 
@@ -29,30 +29,30 @@ interface AppProps {}
 
 const App: React.FC<AppProps> = () => {
   const connectionStatus = useConnectionStatus()
-  const [replId, setReplId] = useState<string>()
+  const [processId, setProcessId] = useState<string>()
   const [running, setRunning] = useState(false)
   const [runId, setRunId] = useState<string>()
-  const [runCode] = useCreateReplMutation({
-    variables: { type: ReplType.Run }
+  const [runCode] = useCreateProcessMutation({
+    variables: { type: ProcessType.Run }
   })
-  const [createDefaultRepl] = useCreateReplMutation({
-    variables: { type: ReplType.Default }
+  const [createDefaultProcess] = useCreateProcessMutation({
+    variables: { type: ProcessType.Default }
   })
   useEffect(() => {
-    if (!replId) {
-      createDefaultRepl().then(resp => {
+    if (!processId) {
+      createDefaultProcess().then(resp => {
         if (resp.data) {
-          setReplId(resp.data.createRepl)
+          setProcessId(resp.data.createProcess)
         }
       })
     }
-  }, [replId, createDefaultRepl])
+  }, [processId, createDefaultProcess])
 
   const onRunClick = () => {
     setRunning(true)
     runCode().then(resp => {
       if (resp.data) {
-        setRunId(resp.data.createRepl)
+        setRunId(resp.data.createProcess)
       }
     })
   }
@@ -72,9 +72,9 @@ const App: React.FC<AppProps> = () => {
     })
   }
 
-  const onReplExit = (terminal: Terminal, exitCode: number) => {
-    // force repl re-creation
-    setReplId(undefined)
+  const onProcessExit = (terminal: Terminal, exitCode: number) => {
+    // force process re-creation
+    setProcessId(undefined)
   }
 
   return (
@@ -132,9 +132,9 @@ const App: React.FC<AppProps> = () => {
           <Col span={10}>
             <BreezeComponent title="Run Output">
               {runId ? (
-                <Shell replId={runId} onExit={onRunExit} />
-              ) : replId ? (
-                <Shell replId={replId} onExit={onReplExit} />
+                <Shell processId={runId} onExit={onRunExit} />
+              ) : processId ? (
+                <Shell processId={processId} onExit={onProcessExit} />
               ) : (
                 <Spin />
               )}

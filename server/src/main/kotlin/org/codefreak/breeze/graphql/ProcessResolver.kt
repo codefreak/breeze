@@ -10,7 +10,7 @@ import io.reactivex.Flowable
 import io.vertx.core.Future
 import io.vertx.core.Promise
 import org.codefreak.breeze.BreezeConfiguration
-import org.codefreak.breeze.graphql.model.ReplType
+import org.codefreak.breeze.graphql.model.ProcessType
 import org.codefreak.breeze.shell.Process
 import org.codefreak.breeze.util.toCompletionStage
 import org.codefreak.breeze.workspace.Workspace
@@ -24,21 +24,21 @@ import java.util.concurrent.CompletionStage
 import kotlin.concurrent.thread
 
 @Singleton
-class ReplResolver
+class ProcessResolver
 @Inject constructor(
         private val config: BreezeConfiguration,
         private val workspace: Workspace
 ) : GraphQLMutationResolver, GraphQLSubscriptionResolver {
     companion object {
         private val MAIN_PROCESS_UID = UUID(0, 0)
-        private val log: Logger = LoggerFactory.getLogger(ReplResolver::class.java)
+        private val log: Logger = LoggerFactory.getLogger(ProcessResolver::class.java)
     }
 
     private val processMap = mutableMapOf<UUID, Process>()
 
-    fun createRepl(type: ReplType = ReplType.DEFAULT): CompletionStage<UUID> {
+    fun createProcess(type: ProcessType = ProcessType.DEFAULT): CompletionStage<UUID> {
         val promise = Promise.promise<UUID>()
-        if (type === ReplType.DEFAULT) {
+        if (type === ProcessType.DEFAULT) {
             workspace.start().onSuccess {
                 processMap[MAIN_PROCESS_UID] = it
                 promise.complete(MAIN_PROCESS_UID)
@@ -47,32 +47,30 @@ class ReplResolver
             workspace.exec(config.runCmd).map { process ->
                 val id = UUID.randomUUID()
                 processMap[id] = process
-                log.info("Starting REPL $id")
+                log.info("Starting process $id")
                 process.start()
-                log.info("Started REPL $id")
+                log.info("Started process $id")
                 promise.complete(id)
             }
         }
         return promise.future().toCompletionStage()
     }
 
-    fun writeRepl(id: UUID, data: String) {
-        // fail gracefully if repl does not exist (anymore)
+    fun writeProcess(id: UUID, data: String) {
+        // fail gracefully if process does not exist (anymore)
         processMap[id]?.write(data) ?: -1
     }
 
-    fun resizeRepl(id: UUID, cols: Int, rows: Int): Boolean {
-        val process = processMap[id] ?: throw IllegalArgumentException("No REPL $id")
+    fun resizeProcess(id: UUID, cols: Int, rows: Int): Boolean = withProcess(id) { process ->
         process.resize(cols, rows)
         return true
     }
 
-    fun killRepl(id: UUID) {
+    fun killProcess(id: UUID) {
         stopProcess(id)
     }
 
-    fun replOutput(id: UUID): Publisher<String> {
-        val process = processMap[id] ?: throw IllegalArgumentException("No REPL $id")
+    fun processOutput(id: UUID): Publisher<String> = withProcess(id) { process ->
         return Flowable.create({ emitter ->
             log.info("Subscribing for data of shell $id")
             val stdoutThread = thread {
@@ -87,19 +85,18 @@ class ReplResolver
         }, BackpressureStrategy.BUFFER)
     }
 
-    fun replWait(id: UUID): Publisher<Int> {
-        val process = processMap[id] ?: throw IllegalArgumentException("No REPL $id")
+    fun processWait(id: UUID): Publisher<Int> = withProcess(id) { process ->
         return Flowable.create<Int>({ emitter ->
             val joinThread = thread {
                 try {
                     val exitCode = process.join()
-                    log.info("Repl $id finished")
+                    log.info("Process $id finished with exit code $exitCode")
                     if (!emitter.isCancelled) {
                         emitter.onNext(exitCode)
                         emitter.onComplete()
                     }
                 } catch (e: InterruptedException) {
-                    log.info("Waiting for REPL $id was cancelled")
+                    log.info("Waiting for process $id was cancelled")
                 }
             }
             emitter.setCancellable {
@@ -116,5 +113,10 @@ class ReplResolver
         val process = processMap.remove(id) ?: return Future.succeededFuture(-1).toCompletionStage()
         log.info("Killing process $id. ${processMap.size} processes left")
         return Future.succeededFuture(process.close()).toCompletionStage()
+    }
+
+    private inline fun <T> withProcess(id: UUID, block: (process: Process) -> T): T {
+        val process = processMap[id] ?: throw IllegalArgumentException("No process $id")
+        return block(process)
     }
 }

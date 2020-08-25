@@ -1,16 +1,16 @@
 import {
-  ResizeReplMutationResult,
-  useResizeReplMutation
+  ResizeProcessMutationResult,
+  useResizeProcessMutation
 } from '../generated/graphql'
 import { useCallback } from 'react'
 
-type UseReplResizeResult = [
+type UseProcessResizeResult = [
   (rows: number, cols: number) => void,
-  ResizeReplMutationResult
+  ResizeProcessMutationResult
 ]
 
-const useReplResize = (id: string): UseReplResizeResult => {
-  const [resizeShell, results] = useResizeReplMutation()
+const useProcessResize = (id: string): UseProcessResizeResult => {
+  const [resizeShell, results] = useResizeProcessMutation()
   const resize = useCallback(
     (rows: number, cols: number) =>
       resizeShell({ variables: { id, cols, rows } }),
@@ -20,4 +20,4 @@ const useReplResize = (id: string): UseReplResizeResult => {
   return [resize, results]
 }
 
-export default useReplResize
+export default useProcessResize

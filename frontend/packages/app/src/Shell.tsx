@@ -1,15 +1,15 @@
 import React, { useEffect, useState } from 'react'
 import { Terminal } from 'xterm'
-import useReplWriteData from './hooks/useReplWriteData'
+import useProcessWriteData from './hooks/useProcessWriteData'
 import XTerm from './components/XTerm'
-import useReplOutput from './hooks/useReplOutput'
-import useReplExit from './hooks/useReplExit'
+import useProcessOutput from './hooks/useProcessOutput'
+import useProcessExit from './hooks/useProcessExit'
 import useTerminalBuffer from './hooks/useTerminalBuffer'
 import withConfig, { WithConfigProps } from './util/withConfig'
-import useReplResize from './hooks/useReplResize'
+import useProcessResize from './hooks/useProcessResize'
 
 export interface ShellProps extends WithConfigProps {
-  replId: string
+  processId: string
   onExit?: (
     terminal: Terminal,
     exitCode: number,
@@ -17,18 +17,18 @@ export interface ShellProps extends WithConfigProps {
   ) => void
 }
 
-const Shell: React.FC<ShellProps> = ({ config, replId, onExit }) => {
+const Shell: React.FC<ShellProps> = ({ config, processId, onExit }) => {
   const [exitCode, setExitCode] = useState<number>()
-  const [resize] = useReplResize(replId)
+  const [resize] = useProcessResize(processId)
   const [terminal, setTerminal] = useState<Terminal>()
   const { buffer, appendBuffer, purgeBuffer } = useTerminalBuffer(
-    config.instanceId + ':' + replId
+    config.instanceId + ':' + processId
   )
   const [initialized, setInitialized] = useState<boolean>(false)
-  const [writeData] = useReplWriteData(replId)
+  const [writeData] = useProcessWriteData(processId)
 
-  useReplOutput(
-    replId,
+  useProcessOutput(
+    processId,
     data => {
       if (terminal && exitCode === undefined) {
         terminal.write(data)
@@ -38,7 +38,7 @@ const Shell: React.FC<ShellProps> = ({ config, replId, onExit }) => {
     { skip: !terminal }
   )
 
-  useReplExit(replId, setExitCode, { skip: !terminal })
+  useProcessExit(processId, setExitCode, { skip: !terminal })
 
   useEffect(() => {
     if (exitCode !== undefined && terminal && onExit) {
@@ -66,7 +66,7 @@ const Shell: React.FC<ShellProps> = ({ config, replId, onExit }) => {
   }, [terminal, buffer, setInitialized, initialized, resize])
 
   // TODO: "key" is used to force re-render
-  return <XTerm key={replId} onReady={setTerminal} onResize={resize} />
+  return <XTerm key={processId} onReady={setTerminal} onResize={resize} />
 }
 
 export default withConfig<typeof Shell, ShellProps>(Shell)

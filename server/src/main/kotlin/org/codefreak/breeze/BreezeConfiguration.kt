@@ -6,10 +6,10 @@ import org.codefreak.breeze.util.getSurroundingContainerId
 @Singleton
 class BreezeConfiguration {
     val instanceId: String = java.util.UUID.randomUUID().toString()
-    var replHostname = "breeze"
-    var replDockerImage = "python:3.8.2-buster"
-    var workspacePath = "/workspace"
-    var dockerWorkingdir = workspacePath
+    var workspaceHostname = "breeze"
+    var workspaceDockerImage = "python:3.8.2-buster"
+    var workspaceCodePath = "/workspace"
+    var dockerWorkingdir = workspaceCodePath
     var mainFile = "main.py"
     var mainFileContent = """
         def main():
@@ -20,7 +20,7 @@ class BreezeConfiguration {
         if __name__ == '__main__':
             main()
     """.trimIndent()
-    var replCmd = arrayOf("/usr/bin/env", "bash", "-i")
+    var workspaceReplCmd = arrayOf("/usr/bin/env", "bash", "-i")
     val defaultEnv: Map<String, String> = mapOf(
             "TERM" to "xterm"
     )

@@ -30,7 +30,7 @@ class DockerWorkspace
         private val docker: DockerClient
 ) : Workspace(
         vertx,
-        path = if (getSurroundingContainerId() == null) tmpdir(config.instanceId) else Paths.get(config.workspacePath),
+        path = if (getSurroundingContainerId() == null) tmpdir(config.instanceId) else Paths.get(config.workspaceCodePath),
         remove = true
 ) {
     companion object {
@@ -39,7 +39,7 @@ class DockerWorkspace
 
     private var containerId: String? = null
 
-    override fun doInit(cmd: Array<String>, env: Map<String, String>?): Future<Unit> {
+    override fun doCreate(cmd: Array<String>, env: Map<String, String>?): Future<Unit> {
         // use existing container
         if (containerId !== null) {
             return Future.succeededFuture()
@@ -56,7 +56,7 @@ class DockerWorkspace
         }
 
         // pull docker image and create container
-        val imageName = normalizeImageName(config.replDockerImage)
+        val imageName = normalizeImageName(config.workspaceDockerImage)
         return promise.future().compose {
             return@compose pullDockerImage(imageName)
         }.compose {
@@ -102,7 +102,7 @@ class DockerWorkspace
                 .withEnv(env?.toKeyValueList() ?: listOf())
                 .withStdinOpen(true)
                 .withAttachStdout(true)
-                .withHostName(config.replHostname)
+                .withHostName(config.workspaceHostname)
                 .withWorkingDir(config.dockerWorkingdir)
                 .withVolumes(volume)
                 .withHostConfig(
@@ -180,10 +180,10 @@ class DockerWorkspace
             // create simple bind-mount of the tmp dir in case we are running Breeze outside of a container
             return path.toString()
         } else {
-            // mount workspace volume from this container to the repl
+            // mount code volume containing all files from this container to the workspace
             val containerInfo = docker.inspectContainerCmd(ownContainerId).exec()
-            val workspaceMount = containerInfo.mounts?.find { it.destination?.path == config.workspacePath }
-                    ?: throw RuntimeException("This container has no mount at ${config.workspacePath}")
+            val workspaceMount = containerInfo.mounts?.find { it.destination?.path == config.workspaceCodePath }
+                    ?: throw RuntimeException("This container has no mount at ${config.workspaceCodePath}")
 
             // either use the volume name or the absolute path as volume source
             workspaceMount.name?.let {
@@ -192,7 +192,7 @@ class DockerWorkspace
             workspaceMount.source?.let {
                 return it
             }
-            throw RuntimeException("Could not determine the mount source for ${config.workspacePath}")
+            throw RuntimeException("Could not determine the mount source for ${config.workspaceCodePath}")
         }
     }
 

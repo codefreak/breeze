@@ -15,7 +15,7 @@ import graphql.kickstart.tools.GraphQLResolver
 import org.codefreak.breeze.graphql.ConfigResolver
 import org.codefreak.breeze.graphql.FileResolver
 import org.codefreak.breeze.graphql.GraphQLFactory
-import org.codefreak.breeze.graphql.ReplResolver
+import org.codefreak.breeze.graphql.ProcessResolver
 import org.codefreak.breeze.workspace.DockerWorkspace
 import org.codefreak.breeze.workspace.Workspace
 import java.net.URI
@@ -44,7 +44,7 @@ class GraphqlServerBinder : AbstractModule() {
         bind(Workspace::class.java).to(DockerWorkspace::class.java)
 
         Multibinder.newSetBinder(binder(), object : TypeLiteral<GraphQLResolver<*>>() {}).apply {
-            addBinding().to(ReplResolver::class.java)
+            addBinding().to(ProcessResolver::class.java)
             addBinding().to(FileResolver::class.java)
             addBinding().to(ConfigResolver::class.java)
         }

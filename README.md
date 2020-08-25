@@ -2,7 +2,7 @@
 <h1>Breeze – cloud native REPL</h1>
 </div>
 
-**Breeze is a browser editor and REPL/terminal that connects to a dedicated Docker container on the server. It allows creating on-demand programming environments for your favourite programming language.**
+Breeze is a browser editor and REPL/terminal that connects to a dedicated Docker container on the server. It allows creating on-demand programming environments for your favourite programming language.dd
 
 TODO: Screenshot
 

@@ -1,5 +1,5 @@
 package org.codefreak.breeze.graphql.model
 
-enum class ReplType {
+enum class ProcessType {
     DEFAULT, RUN
 }

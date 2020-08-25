@@ -6,7 +6,6 @@ import io.vertx.core.Vertx
 import org.codefreak.breeze.shell.Process
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
-import java.util.UUID
 import kotlin.properties.Delegates
 
 /**
@@ -23,7 +22,9 @@ abstract class Workspace(
     }
 
     private var status: WorkspaceStatus by Delegates.observable(WorkspaceStatus.UNDEFINED) { _, old, new ->
-        log.debug("Workspace status changed: $old -> $new")
+        if (log.isDebugEnabled) {
+            log.debug("Workspace status changed: $old -> $new")
+        }
     }
 
     private var mainProcess: Process? = null
@@ -32,17 +33,17 @@ abstract class Workspace(
     private val stopPromise: Promise<Unit> = Promise.promise()
     private val removePromise: Promise<Unit> = Promise.promise()
 
-    fun init(cmd: Array<String>, env: Map<String, String>? = null): Future<Unit> {
+    fun create(cmd: Array<String>, env: Map<String, String>? = null): Future<Unit> {
         if (status >= WorkspaceStatus.CREATING && status < WorkspaceStatus.RUNNING) {
             return creationPromise.future()
         }
         status = WorkspaceStatus.CREATING
-        return doInit(cmd, env).onSuccess {
+        return doCreate(cmd, env).onSuccess {
             status = WorkspaceStatus.CREATED
         }
     }
 
-    protected abstract fun doInit(cmd: Array<String>, env: Map<String, String>? = null): Future<Unit>
+    protected abstract fun doCreate(cmd: Array<String>, env: Map<String, String>? = null): Future<Unit>
 
     fun start(): Future<Process> {
         if (status === WorkspaceStatus.STARTING) {

@@ -31,7 +31,7 @@ class LocalWorkspace(
     private var cmd: Array<String>? = null
     private var env: Map<String, String>? = null
 
-    override fun doInit(cmd: Array<String>, env: Map<String, String>?): Future<Unit> {
+    override fun doCreate(cmd: Array<String>, env: Map<String, String>?): Future<Unit> {
         this.cmd = cmd
         this.env = env
 

@@ -36,7 +36,7 @@ type Query {
     config: Config!
 }
 
-enum REPLType {
+enum ProcessType {
     DEFAULT, RUN
 }
 
@@ -48,14 +48,14 @@ type Mutation {
     #move(source: String!, target: String!): FileSystemNode!
     #copy(soruce: String!, target: String!): FileSystemNode!
 
-    createRepl(type: REPLType): ID!
-    killRepl(id: ID!): Int
-    writeRepl(id: ID!, data: String!): Int
-    resizeRepl(id: ID!, cols: Int!, rows: Int!): Boolean
+    createProcess(type: ProcessType): ID!
+    killProcess(id: ID!): Int
+    writeProcess(id: ID!, data: String!): Int
+    resizeProcess(id: ID!, cols: Int!, rows: Int!): Boolean
 }
 
 type Subscription {
     fileChange: FilesystemEvent!
-    replOutput(id: ID!): String!
-    replWait(id: ID!): Int!
+    processOutput(id: ID!): String!
+    processWait(id: ID!): Int!
 }
