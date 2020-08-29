@@ -70,6 +70,9 @@ Breeze supports three environments: `docker` (default), `k8s` and `local`. On Do
 ### Where are the files stored?
 Breeze uses the filesystem of the container. If Breeze itself runs inside a container you will either have to bind-mount a path from your local computer, or a named volume to `/workspace` inside the container. Otherwise, Breeze cannot mount the same files to the REPL container. Breeze will try to detect the correct volume mount automatically. If this fails you can use the `--mount` flag.
 
+If you run Breeze on your local machine outside of a container (e.g. during development) it needs a directory, where it can write files to. By default, it will create a `.breeze/workspace` directory inside the working directory of the JVM
+(`user.dir` java property).
+
 ## License
 Breeze is licensed under MIT.
 

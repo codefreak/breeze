@@ -16,7 +16,6 @@ class GraphQLFactory(
             file("schema.graphqls")
             scalars(ExtendedScalars.DateTime)
             resolvers(resolvers)
-            dictionary(Directory::class.java)
         }
 
         val schema = schemaParser.build().makeExecutableSchema()

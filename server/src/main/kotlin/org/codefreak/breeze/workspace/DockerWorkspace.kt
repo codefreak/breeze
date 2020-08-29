@@ -18,9 +18,10 @@ import org.codefreak.breeze.shell.docker.DockerContainerProcess
 import org.codefreak.breeze.shell.docker.DockerExecProcess
 import org.codefreak.breeze.util.async
 import org.codefreak.breeze.util.getSurroundingContainerId
-import org.codefreak.breeze.util.tmpdir
+import org.codefreak.breeze.util.workspacePath
 import org.slf4j.LoggerFactory
 import java.nio.file.Paths
+import kotlin.concurrent.thread
 
 @Singleton
 class DockerWorkspace
@@ -30,7 +31,7 @@ class DockerWorkspace
         private val docker: DockerClient
 ) : Workspace(
         vertx,
-        path = if (getSurroundingContainerId() == null) tmpdir(config.instanceId) else Paths.get(config.workspaceCodePath),
+        path = if (getSurroundingContainerId() == null) workspacePath(config.instanceId) else Paths.get(config.workspaceCodePath),
         remove = true
 ) {
     companion object {
@@ -64,13 +65,18 @@ class DockerWorkspace
         }
     }
 
-    override fun doStart(): Future<Process> {
+    override fun doStart(): Future<out Process> {
         return Future.succeededFuture(
                 DockerContainerProcess(
                         docker,
                         containerId ?: throw RuntimeException("No containerId")
                 )
-        )
+        ).onSuccess { process ->
+            thread {
+                process.join()
+                stop()
+            }
+        }
     }
 
     override fun doStop(): Future<Unit> = withContainerId {

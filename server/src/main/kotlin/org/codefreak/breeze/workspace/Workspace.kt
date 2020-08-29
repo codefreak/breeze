@@ -73,7 +73,7 @@ abstract class Workspace(
         return promise.future()
     }
 
-    protected abstract fun doStart(): Future<Process>
+    protected abstract fun doStart(): Future<out Process>
 
     fun stop(): Future<Unit> {
         if (status >= WorkspaceStatus.STOPPING) {

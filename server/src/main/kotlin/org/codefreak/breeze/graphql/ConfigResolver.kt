@@ -13,7 +13,7 @@ import org.codefreak.breeze.graphql.model.Config
 class ConfigResolver
 @Inject constructor(
         private val config: BreezeConfiguration
-) : GraphQLQueryResolver, GraphQLMutationResolver {
+) : GraphQLQueryResolver {
 
     fun config() = Config(
             instanceId = config.instanceId

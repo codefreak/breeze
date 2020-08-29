@@ -7,7 +7,7 @@ import io.vertx.core.Promise
 import io.vertx.core.Vertx
 import org.codefreak.breeze.shell.LocalProcess
 import org.codefreak.breeze.shell.Process
-import org.codefreak.breeze.util.tmpdir
+import org.codefreak.breeze.util.workspacePath
 import java.nio.file.Path
 
 @Singleton
@@ -22,7 +22,7 @@ class LocalWorkspace(
          */
         fun tmp(vertx: Vertx) = LocalWorkspace(
                 vertx,
-                tmpdir(),
+                workspacePath(),
                 remove = true
         )
     }
