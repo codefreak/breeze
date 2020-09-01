@@ -6,6 +6,7 @@ import io.vertx.core.Vertx
 import org.codefreak.breeze.shell.Process
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
+import kotlin.concurrent.thread
 import kotlin.properties.Delegates
 
 /**
@@ -67,6 +68,12 @@ abstract class Workspace(
             status = WorkspaceStatus.RUNNING
             it.start()
             mainProcess = it
+            // join process to keep status synced
+            // TODO: this looks ugly and creates a stray thread
+            thread {
+                it.join()
+                stop()
+            }
             promise.complete(it)
             startupPromise = null
         }

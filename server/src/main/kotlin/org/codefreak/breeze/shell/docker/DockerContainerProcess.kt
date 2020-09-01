@@ -5,6 +5,8 @@ import com.github.dockerjava.api.async.ResultCallback
 import com.github.dockerjava.api.exception.DockerException
 import com.github.dockerjava.api.exception.NotModifiedException
 import com.github.dockerjava.api.model.WaitResponse
+import org.apache.commons.io.input.CloseShieldInputStream
+import org.apache.commons.io.output.CloseShieldOutputStream
 import org.codefreak.breeze.shell.Process
 import org.slf4j.LoggerFactory
 import java.io.PipedInputStream
@@ -19,16 +21,16 @@ class DockerContainerProcess(
     }
 
     override val stdin = PipedOutputStream()
-    private val stdoutWriter = PipedOutputStream()
-    override val stdout = PipedInputStream(stdoutWriter)
+    private val stdoutStream = PipedOutputStream()
+    override val stdout = PipedInputStream(stdoutStream)
 
     override fun start() {
         docker.attachContainerCmd(containerId)
                 .withFollowStream(true)
-                .withStdIn(PipedInputStream(stdin))
+                .withStdIn(CloseShieldInputStream(PipedInputStream(stdin)))
                 .withStdErr(true)
                 .withStdOut(true)
-                .exec(StreamResultCallback(stdoutWriter))
+                .exec(StreamResultCallback(CloseShieldOutputStream(stdoutStream)))
 
         try {
             docker.startContainerCmd(containerId).exec()
@@ -59,9 +61,13 @@ class DockerContainerProcess(
     }
 
     override fun resize(cols: Int, rows: Int) {
-        docker.resizeContainerCmd(containerId)
-                .withSize(rows, cols)
-                .exec()
+        try {
+            docker.resizeContainerCmd(containerId)
+                    .withSize(rows, cols)
+                    .exec()
+        } catch (e: DockerException) {
+            log.warn("Could not resize container's pty: " + e.message)
+        }
     }
 
     override fun join(): Int {

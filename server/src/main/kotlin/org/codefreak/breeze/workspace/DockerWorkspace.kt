@@ -21,7 +21,6 @@ import org.codefreak.breeze.util.getSurroundingContainerId
 import org.codefreak.breeze.util.workspacePath
 import org.slf4j.LoggerFactory
 import java.nio.file.Paths
-import kotlin.concurrent.thread
 
 @Singleton
 class DockerWorkspace
@@ -71,12 +70,7 @@ class DockerWorkspace
                         docker,
                         containerId ?: throw RuntimeException("No containerId")
                 )
-        ).onSuccess { process ->
-            thread {
-                process.join()
-                stop()
-            }
-        }
+        )
     }
 
     override fun doStop(): Future<Unit> = withContainerId {
