@@ -53,6 +53,31 @@ docker run --rm -it \
 ```
 Btw, the default `repl-cmd` is `/bin/sh`. This should work for many images, but some very slim images even remove the default shell. In these cases you need to build a custom image.
 
+## Setup
+
+### Development
+The programming languages used for Breeze are Kotlin and TypeScript (React).
+The backend is based on VertX and the frontend uses React for a snappy UI/UX.
+To work on the source of Breeze please install OpenJDK and Node + Yarn.
+Afterwards you need to run the following setup once (please note the directories):
+
+```shell script
+/         $ ./gradlew assemble
+/frontend $ yarn install
+/frontend $ yarn build
+``` 
+
+To run the frontend and backend please use the following commands:
+```shell script
+/                      $ ./gradlew vertxRun
+/frontend/packages/app $ yarn start
+```
+
+The frontend will hot reload on any modification.
+Changes on the backend require a full restart!
+
+We are working on a more convenient developer experience.
+
 ## How secure is Breeze?
 The Breeze application itself is basically only a proxy between the Web UI and a Docker container. Breeze needs access to the Docker engine or K8s cluster via service accounts (upcoming feature). 
 
