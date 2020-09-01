@@ -42,10 +42,19 @@ class ProcessResolver
         val promise = Promise.promise<UUID>()
         if (type === ProcessType.DEFAULT) {
             workspace.start().onSuccess { process ->
-                processMap[MAIN_PROCESS_UID] = process
-                val existingStdout = stdoutMap[MAIN_PROCESS_UID]?.cache?.toByteArray()
-                stdoutMap[MAIN_PROCESS_UID] = CachedTeeInputStream(process.stdout, existingStdout).also {
-                    it.drain()
+                val existingMainProcess = processMap[MAIN_PROCESS_UID]
+                if(existingMainProcess == null) {
+                    processMap[MAIN_PROCESS_UID] = process
+                    val existingStdout = stdoutMap[MAIN_PROCESS_UID]?.cache?.toByteArray()
+                    stdoutMap[MAIN_PROCESS_UID] = CachedTeeInputStream(process.stdout, existingStdout).also {
+                        it.drain()
+                    }
+                    // TODO: introduce event system for workspace to keep process map in sync
+                    thread {
+                        process.join()
+                        log.debug("Main process stopped. Removing from map")
+                        processMap.remove(MAIN_PROCESS_UID)
+                    }
                 }
                 promise.complete(MAIN_PROCESS_UID)
             }
