@@ -74,6 +74,7 @@ abstract class Workspace(
             // TODO: this looks ugly and creates a stray thread
             thread {
                 it.join()
+                log.debug("Main process was stopped from outside. Stopping workspace...")
                 stop()
             }
             promise.complete(it)
