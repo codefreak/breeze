@@ -90,13 +90,11 @@ abstract class Workspace(
         if (status >= WorkspaceStatus.STOPPING) {
             return stopPromise.future()
         }
-        if (status < WorkspaceStatus.RUNNING) {
-            return Future.failedFuture(RuntimeException("Can only stop running workspace"))
-        }
         status = WorkspaceStatus.STOPPING
         doStop().onComplete {
             status = WorkspaceStatus.STOPPED
             mainProcess = null
+            stopPromise.complete()
         }
         return stopPromise.future()
     }
@@ -108,8 +106,8 @@ abstract class Workspace(
         if (status >= WorkspaceStatus.REMOVING && status < WorkspaceStatus.STOPPED) {
             return removePromise.future()
         }
-        if (status < WorkspaceStatus.STOPPED) {
-            return Future.failedFuture(RuntimeException("Can only remove stopped workspace"))
+        if (status < WorkspaceStatus.STOPPED && status > WorkspaceStatus.CREATED) {
+            return Future.failedFuture(RuntimeException("Can only remove non-running workspace"))
         }
         status = WorkspaceStatus.REMOVING
         if (remove) {

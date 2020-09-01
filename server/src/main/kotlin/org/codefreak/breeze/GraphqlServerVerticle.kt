@@ -4,6 +4,7 @@ import com.google.inject.Inject
 import com.google.inject.Singleton
 import graphql.GraphQL
 import io.vertx.core.AbstractVerticle
+import io.vertx.core.Future
 import io.vertx.core.http.HttpMethod
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.handler.CorsHandler
@@ -17,6 +18,7 @@ import org.codefreak.breeze.vertx.FilesystemEventCodec
 import org.codefreak.breeze.vertx.FilesystemWatcher
 import org.codefreak.breeze.workspace.Workspace
 import org.slf4j.LoggerFactory
+import kotlin.concurrent.thread
 
 @Singleton
 class GraphqlServerVerticle
@@ -59,8 +61,23 @@ class GraphqlServerVerticle
         router.route("/graphql").handler(GraphQLHandler.create(graphQL))
 
         filesystemWatcher.watch()
+
         vertx.createHttpServer()
                 .requestHandler(router::handle)
                 .listen(8080)
+    }
+
+    override fun stop(stopFuture: Future<Void>) {
+        log.info("Received shutdown, stopping server…")
+        log.info("Stopping file watcher…")
+        filesystemWatcher.stop()
+        log.info("Stopping workspace…")
+        workspace.stop().onSuccess {
+            log.info("removing workspace…")
+            workspace.remove().onComplete {
+                log.info("Done.")
+                stopFuture.complete()
+            }
+        }
     }
 }

@@ -30,18 +30,18 @@ class FilesystemWatcher
 
     private var pollRate = 100L
     private val root = workspace.path
-    private var watching = false
+    private var watchTimerId: Long? = null
     private val watchService = FileSystems.getDefault().newWatchService()
     private val eventBus = vertx.eventBus()
 
+    @Synchronized
     fun watch() {
-        if (watching) {
+        if (watchTimerId !== null) {
             throw RuntimeException("Already watching $root for changes")
         }
 
-        watching = true
         watchPathRecursively(root)
-        vertx.setPeriodic(pollRate) {
+        watchTimerId = vertx.setPeriodic(pollRate) {
             val happened = watchService.poll() ?: return@setPeriodic
 
             val parent = happened.watchable() as Path
@@ -58,6 +58,13 @@ class FilesystemWatcher
                 broadcastEvent(absolute, kind)
             }
             happened.reset()
+        }
+    }
+
+    @Synchronized
+    fun stop() {
+        watchTimerId?.let {
+            vertx.cancelTimer(it)
         }
     }
 
