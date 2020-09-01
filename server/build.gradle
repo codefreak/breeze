@@ -42,6 +42,7 @@ dependencies {
     implementation "io.reactivex.rxjava2:rxjava:2.2.19"
     implementation "com.github.davidmoten:rxjava2-extras:0.1.38"
     implementation "com.github.akarnokd:rxjava2-jdk8-interop:0.3.7"
+    implementation 'org.junit.jupiter:junit-jupiter:5.4.2'
 }
 
 vertx {

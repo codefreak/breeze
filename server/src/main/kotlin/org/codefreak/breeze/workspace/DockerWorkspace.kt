@@ -74,6 +74,7 @@ class DockerWorkspace
         ).onSuccess { process ->
             thread {
                 process.join()
+                log.warn("Process exited abnormally")
                 stop()
             }
         }

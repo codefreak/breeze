@@ -2,11 +2,15 @@ package org.codefreak.breeze.shell.docker
 
 import com.github.dockerjava.api.DockerClient
 import com.github.dockerjava.api.async.ResultCallback
+import com.github.dockerjava.api.exception.ConflictException
 import com.github.dockerjava.api.exception.DockerException
 import com.github.dockerjava.api.exception.NotModifiedException
 import com.github.dockerjava.api.model.WaitResponse
+import org.apache.commons.io.output.ProxyOutputStream
+import org.bouncycastle.util.test.UncloseableOutputStream
 import org.codefreak.breeze.shell.Process
 import org.slf4j.LoggerFactory
+import java.io.OutputStream
 import java.io.PipedInputStream
 import java.io.PipedOutputStream
 
@@ -38,6 +42,7 @@ class DockerContainerProcess(
     }
 
     override fun close(): Int {
+        println(Thread.currentThread().getStackTrace())
         try {
             // TODO: try to stop gracefully first
             docker.killContainerCmd(containerId).exec()
@@ -59,9 +64,13 @@ class DockerContainerProcess(
     }
 
     override fun resize(cols: Int, rows: Int) {
-        docker.resizeContainerCmd(containerId)
-                .withSize(rows, cols)
-                .exec()
+        try {
+            docker.resizeContainerCmd(containerId)
+                    .withSize(rows, cols)
+                    .exec()
+        } catch (e: ConflictException) {
+            // Ignore if container is not running, yet
+        }
     }
 
     override fun join(): Int {

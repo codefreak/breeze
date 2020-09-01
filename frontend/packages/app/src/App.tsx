@@ -57,18 +57,12 @@ const App: React.FC<AppProps> = () => {
     })
   }
 
-  const onRunExit = (
-    terminal: Terminal,
-    exitCode: number,
-    purgeBuffer: () => void
-  ) => {
+  const onRunExit = (terminal: Terminal, exitCode: number) => {
     terminal.writeln(`\nProcess finished with exit code ${exitCode}`)
     terminal.writeln('Press any key to continue...')
     terminal.onData(() => {
       setRunId(undefined)
       setRunning(false)
-      // clear local stored data of buffer
-      purgeBuffer()
     })
   }
 
