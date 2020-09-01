@@ -43,7 +43,10 @@ dependencies {
     implementation "com.github.davidmoten:rxjava2-extras:0.1.38"
     implementation "com.github.akarnokd:rxjava2-jdk8-interop:0.3.7"
 
-    // Useful misc
+    // Testing
+    implementation 'org.junit.jupiter:junit-jupiter:5.4.2'
+
+    // Useful misc libs
     implementation 'commons-io:commons-io:2.7'
 }
 

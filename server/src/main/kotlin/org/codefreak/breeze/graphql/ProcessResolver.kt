@@ -11,6 +11,7 @@ import io.vertx.core.Future
 import io.vertx.core.Promise
 import org.codefreak.breeze.BreezeConfiguration
 import org.codefreak.breeze.graphql.model.ProcessType
+import org.codefreak.breeze.io.CachedTeeInputStream
 import org.codefreak.breeze.shell.Process
 import org.codefreak.breeze.util.toCompletionStage
 import org.codefreak.breeze.workspace.Workspace
@@ -35,12 +36,17 @@ class ProcessResolver
     }
 
     private val processMap = mutableMapOf<UUID, Process>()
+    private val stdoutMap = mutableMapOf<UUID, CachedTeeInputStream>()
 
     fun createProcess(type: ProcessType = ProcessType.DEFAULT): CompletionStage<UUID> {
         val promise = Promise.promise<UUID>()
         if (type === ProcessType.DEFAULT) {
-            workspace.start().onSuccess {
-                processMap[MAIN_PROCESS_UID] = it
+            workspace.start().onSuccess { process ->
+                processMap[MAIN_PROCESS_UID] = process
+                val existingStdout = stdoutMap[MAIN_PROCESS_UID]?.cache?.toByteArray()
+                stdoutMap[MAIN_PROCESS_UID] = CachedTeeInputStream(process.stdout, existingStdout).also {
+                    it.drain()
+                }
                 promise.complete(MAIN_PROCESS_UID)
             }
         } else {
@@ -70,17 +76,17 @@ class ProcessResolver
         stopProcess(id)
     }
 
-    fun processOutput(id: UUID): Publisher<String> = withProcess(id) { process ->
+    fun processOutput(id: UUID): Publisher<String> = withProcess(id) {
+        val stdout = stdoutMap[id] ?: throw IllegalArgumentException("There is no shell $id")
         return Flowable.create({ emitter ->
             log.info("Subscribing for data of shell $id")
             val stdoutThread = thread {
-                Strings.from(BufferedReader(InputStreamReader(process.stdout)))
+                Strings.from(BufferedReader(InputStreamReader(stdout.split())))
                         .onErrorReturnItem("\u0000")
                         .subscribe(emitter::onNext)
             }
             emitter.setCancellable {
                 stdoutThread.interrupt()
-                stopProcess(id)
             }
         }, BackpressureStrategy.BUFFER)
     }
