@@ -11,8 +11,6 @@ import io.vertx.core.Future
 import io.vertx.core.Promise
 import org.codefreak.breeze.BreezeConfiguration
 import org.codefreak.breeze.graphql.model.ProcessType
-import org.codefreak.breeze.io.CachedTeeInputStream
-import org.codefreak.breeze.shell.Process
 import org.codefreak.breeze.util.toCompletionStage
 import org.codefreak.breeze.workspace.Workspace
 import org.reactivestreams.Publisher
@@ -31,66 +29,43 @@ class ProcessResolver
         private val workspace: Workspace
 ) : GraphQLMutationResolver, GraphQLSubscriptionResolver {
     companion object {
-        private val MAIN_PROCESS_UID = UUID(0, 0)
         private val log: Logger = LoggerFactory.getLogger(ProcessResolver::class.java)
     }
-
-    private val processMap = mutableMapOf<UUID, Process>()
-    private val stdoutMap = mutableMapOf<UUID, CachedTeeInputStream>()
 
     fun createProcess(type: ProcessType = ProcessType.DEFAULT): CompletionStage<UUID> {
         val promise = Promise.promise<UUID>()
         if (type === ProcessType.DEFAULT) {
-            workspace.start().onSuccess { process ->
-                val existingMainProcess = processMap[MAIN_PROCESS_UID]
-                if(existingMainProcess == null) {
-                    processMap[MAIN_PROCESS_UID] = process
-                    val existingStdout = stdoutMap[MAIN_PROCESS_UID]?.cache?.toByteArray()
-                    stdoutMap[MAIN_PROCESS_UID] = CachedTeeInputStream(process.stdout, existingStdout).also {
-                        it.drain()
-                    }
-                    // TODO: introduce event system for workspace to keep process map in sync
-                    thread {
-                        process.join()
-                        log.debug("Main process stopped. Removing from map")
-                        processMap.remove(MAIN_PROCESS_UID)
-                    }
-                }
-                promise.complete(MAIN_PROCESS_UID)
+            workspace.start().onSuccess {
+                promise.complete(Workspace.MAIN_PROCESS_ID)
             }
         } else {
-            workspace.exec(config.runCmd).map { process ->
-                val id = UUID.randomUUID()
-                processMap[id] = process
-                log.info("Starting process $id")
-                process.start()
-                log.info("Started process $id")
-                promise.complete(id)
+            workspace.exec(config.runCmd).map { processId ->
+                promise.complete(processId)
             }
         }
         return promise.future().toCompletionStage()
     }
 
-    fun writeProcess(id: UUID, data: String) {
+    fun writeProcess(id: UUID, data: String) = workspace.withProcess(id) {
         // fail gracefully if process does not exist (anymore)
-        processMap[id]?.write(data) ?: -1
+        it.write(data)
     }
 
-    fun resizeProcess(id: UUID, cols: Int, rows: Int): Boolean = withProcess(id) { process ->
+    fun resizeProcess(id: UUID, cols: Int, rows: Int): Boolean = workspace.withProcess(id) { process ->
         process.resize(cols, rows)
-        return true
+        true
     }
 
     fun killProcess(id: UUID) {
         stopProcess(id)
     }
 
-    fun processOutput(id: UUID): Publisher<String> = withProcess(id) {
-        val stdout = stdoutMap[id] ?: throw IllegalArgumentException("There is no shell $id")
+    fun processOutput(id: UUID): Publisher<String> {
+        log.info("Subscribing for data of shell $id")
+        val stdout = workspace.stdout(id) ?: throw IllegalArgumentException("There is no process $id")
         return Flowable.create({ emitter ->
-            log.info("Subscribing for data of shell $id")
             val stdoutThread = thread {
-                Strings.from(BufferedReader(InputStreamReader(stdout.split())))
+                Strings.from(BufferedReader(InputStreamReader(stdout)))
                         .onErrorReturnItem("\u0000")
                         .subscribe(emitter::onNext)
             }
@@ -100,8 +75,8 @@ class ProcessResolver
         }, BackpressureStrategy.BUFFER)
     }
 
-    fun processWait(id: UUID): Publisher<Int> = withProcess(id) { process ->
-        return Flowable.create<Int>({ emitter ->
+    fun processWait(id: UUID): Publisher<Int> = workspace.withProcess(id) { process ->
+        return@withProcess Flowable.create<Int>({ emitter ->
             val joinThread = thread {
                 try {
                     val exitCode = process.join()
@@ -120,18 +95,11 @@ class ProcessResolver
         }, BackpressureStrategy.BUFFER).onErrorReturnItem(-1)
     }
 
-    private fun stopProcess(id: UUID): CompletionStage<Int> {
-        if (id == MAIN_PROCESS_UID) {
-            return Future.succeededFuture(-1).toCompletionStage()
+    private fun stopProcess(id: UUID): CompletionStage<Int> = workspace.withProcess(id) { process ->
+        if (id == Workspace.MAIN_PROCESS_ID) {
+            return@withProcess Future.succeededFuture(-1).toCompletionStage()
         }
-
-        val process = processMap.remove(id) ?: return Future.succeededFuture(-1).toCompletionStage()
-        log.info("Killing process $id. ${processMap.size} processes left")
-        return Future.succeededFuture(process.close()).toCompletionStage()
-    }
-
-    private inline fun <T> withProcess(id: UUID, block: (process: Process) -> T): T {
-        val process = processMap[id] ?: throw IllegalArgumentException("No process $id")
-        return block(process)
+        process.close()
+        return@withProcess Future.succeededFuture(process.close()).toCompletionStage()
     }
 }

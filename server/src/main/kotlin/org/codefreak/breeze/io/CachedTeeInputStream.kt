@@ -15,6 +15,7 @@ class CachedTeeInputStream(private val source: InputStream, initialData: ByteArr
      * TODO: limit cache to 1 MiB
      */
     val cache = ByteArrayOutputStream()
+    private var draining = false
 
     init {
         // write initial data to cache
@@ -60,14 +61,21 @@ class CachedTeeInputStream(private val source: InputStream, initialData: ByteArr
     /**
      * Force draining of the underlying source so all splits get notified correctly
      */
-    fun drain(): Thread = thread {
-        var alive = true
-        while (alive) {
-            try {
-                read()
-                dynamicTeeOutput.flush()
-            } catch (e: IOException) {
-                alive = false
+    @Synchronized
+    fun drain(): Thread {
+        if (draining) {
+            throw IllegalStateException("Tee is already being drained")
+        }
+        draining = true
+        return thread {
+            var alive = true
+            while (alive) {
+                try {
+                    read()
+                    dynamicTeeOutput.flush()
+                } catch (e: IOException) {
+                    alive = false
+                }
             }
         }
     }
