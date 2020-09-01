@@ -11,7 +11,7 @@ import kotlin.properties.Delegates
 
 /**
  * This abstract workspace class is only responsible for state management
- * TODO: make thread safe
+ * TODO: make async thread safe
  */
 abstract class Workspace(
         protected val vertx: Vertx,
@@ -34,6 +34,7 @@ abstract class Workspace(
     private val stopPromise: Promise<Unit> = Promise.promise()
     private val removePromise: Promise<Unit> = Promise.promise()
 
+    @Synchronized
     fun create(cmd: Array<String>, env: Map<String, String>? = null): Future<Unit> {
         if (status >= WorkspaceStatus.CREATING && status < WorkspaceStatus.RUNNING) {
             return creationPromise.future()
@@ -46,6 +47,7 @@ abstract class Workspace(
 
     protected abstract fun doCreate(cmd: Array<String>, env: Map<String, String>? = null): Future<Unit>
 
+    @Synchronized
     fun start(): Future<Process> {
         if (status === WorkspaceStatus.STARTING) {
             return startupPromise?.future()
@@ -82,6 +84,7 @@ abstract class Workspace(
 
     protected abstract fun doStart(): Future<out Process>
 
+    @Synchronized
     fun stop(): Future<Unit> {
         if (status >= WorkspaceStatus.STOPPING) {
             return stopPromise.future()
@@ -99,6 +102,7 @@ abstract class Workspace(
 
     protected abstract fun doStop(): Future<Unit>
 
+    @Synchronized
     fun remove(): Future<Unit> {
         if (status >= WorkspaceStatus.REMOVING && status < WorkspaceStatus.STOPPED) {
             return removePromise.future()
@@ -121,6 +125,7 @@ abstract class Workspace(
 
     protected abstract fun doRemove(): Future<Unit>
 
+    @Synchronized
     fun exec(cmd: Array<String>, env: Map<String, String>? = null): Future<Process> {
         if (status !== WorkspaceStatus.RUNNING) {
             return Future.failedFuture(RuntimeException("Can only start processes in running workspaces"))
