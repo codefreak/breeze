@@ -16,6 +16,7 @@ class ConfigResolver
 ) : GraphQLQueryResolver {
 
     fun config() = Config(
-            instanceId = config.instanceId
+            instanceId = config.instanceId,
+            mainFile = config.mainFile
     )
 }

@@ -46,9 +46,14 @@ class ProcessResolver
         return promise.future().toCompletionStage()
     }
 
-    fun writeProcess(id: UUID, data: String) = workspace.withProcess(id) {
-        // fail gracefully if process does not exist (anymore)
-        it.write(data)
+    fun writeProcess(id: UUID, data: String) {
+        try {
+            return workspace.withProcess(id) {
+                it.write(data)
+            }
+        } catch (e: IllegalArgumentException) {
+            // fail gracefully if process does not exist (anymore)
+        }
     }
 
     fun resizeProcess(id: UUID, cols: Int, rows: Int): Boolean = workspace.withProcess(id) { process ->

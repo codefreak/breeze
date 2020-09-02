@@ -1,4 +1,4 @@
-import { Spin, Tree, Button, Input } from 'antd'
+import { Tree, Button, Input } from 'antd'
 import React, {
   KeyboardEventHandler,
   useCallback,
@@ -23,6 +23,7 @@ import {
 import useFiles from '../hooks/useFiles'
 import { TreeProps } from 'antd/lib/tree'
 import { CheckOutlined, LoadingOutlined } from '@ant-design/icons/lib'
+import LoadingIndicator from "./LoadingIndicator";
 
 const { TreeNode } = Tree
 
@@ -143,7 +144,7 @@ const FileTree: React.FC<FileTreeProps> = ({ onCreate, ...treeProps }) => {
   const { loading, data } = useFiles()
 
   if (loading || data === undefined) {
-    return <Spin />
+    return <LoadingIndicator />
   }
 
   const tree = sortTree(listToTreeByPath(data.files, 'path'))

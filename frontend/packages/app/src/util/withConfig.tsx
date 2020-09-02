@@ -1,6 +1,7 @@
 import { Config, useUseConfigQuery } from '../generated/graphql'
 import React from 'react'
 import { Spin } from 'antd'
+import LoadingIndicator from "../components/LoadingIndicator";
 
 export interface WithConfigProps {
   config: Config
@@ -18,7 +19,7 @@ const withConfig = <
     const config = useUseConfigQuery()
 
     if (config.loading || !config.data?.config) {
-      return <Spin />
+      return <LoadingIndicator />
     }
 
     return <TheComp config={config.data.config} {...props} />

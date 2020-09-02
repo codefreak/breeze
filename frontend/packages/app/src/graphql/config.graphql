@@ -1,5 +1,6 @@
 query UseConfig {
   config {
     instanceId
+    mainFile
   }
 }

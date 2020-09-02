@@ -28,6 +28,7 @@ type FilesystemEvent {
 
 type Config {
     instanceId: String!
+    mainFile: String
 }
 
 type Query {

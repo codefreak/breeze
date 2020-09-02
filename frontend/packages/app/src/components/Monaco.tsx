@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react'
 import { debounce } from 'ts-debounce'
-import MonacoComp, { Monaco as IMonaco } from '@monaco-editor/react'
+import MonacoComp, {
+  EditorProps,
+  Monaco as IMonaco
+} from '@monaco-editor/react'
 import { useGetFileQuery, useWriteFileMutation } from '../generated/graphql'
 import { useMonaco } from '../hooks/useMonaco'
 import { editor } from 'monaco-editor'
@@ -9,6 +12,12 @@ import { Spin } from 'antd'
 interface MonacoProps {
   path: string
   monaco: IMonaco
+}
+
+const DEFAULT_MONACO_OPTIONS: EditorProps['options'] = {
+  automaticLayout: true,
+  minimap: { enabled: false },
+  contextmenu: false
 }
 
 const Monaco: React.FC<MonacoProps> = ({ path, monaco }) => {
@@ -48,7 +57,7 @@ const Monaco: React.FC<MonacoProps> = ({ path, monaco }) => {
 
   return (
     <MonacoComp
-      options={{ automaticLayout: true }}
+      options={DEFAULT_MONACO_OPTIONS}
       editorDidMount={(_, monaco) => {
         setMonacoInstance(monaco)
       }}

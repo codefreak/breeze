@@ -4,10 +4,9 @@ import useProcessWriteData from './hooks/useProcessWriteData'
 import XTerm from './components/XTerm'
 import useProcessOutput from './hooks/useProcessOutput'
 import useProcessExit from './hooks/useProcessExit'
-import withConfig, { WithConfigProps } from './util/withConfig'
 import useProcessResize from './hooks/useProcessResize'
 
-export interface ShellProps extends WithConfigProps {
+export interface ShellProps {
   processId: string
   onExit?: (terminal: Terminal, exitCode: number) => void
 }
@@ -58,4 +57,4 @@ const Shell: React.FC<ShellProps> = ({ processId, onExit }) => {
   return <XTerm key={processId} onReady={setTerminal} onResize={resize} />
 }
 
-export default withConfig<typeof Shell, ShellProps>(Shell)
+export default Shell

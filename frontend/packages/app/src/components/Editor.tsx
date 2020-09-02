@@ -4,20 +4,24 @@ import FileTree, { FileTreeProps, NodeType } from './FileTree'
 import Monaco from './Monaco'
 import { BreezeComponent } from '../App'
 import { basename, join } from 'path'
-
-import './Editor.less'
 import { insertAfter, remove } from '../util/array'
 import { TabsProps } from 'antd/es/tabs'
 import {
   useCreateDirectoryMutation,
   useCreateFileMutation
 } from '../generated/graphql'
+import withConfig, { WithConfigProps } from '../util/withConfig'
 
-// TODO: read backend config
-const DEFAULT_FILE = '/main.py'
+import './Editor.less'
 
-const Editor: React.FC = () => {
-  const [fileStack, setFileStack] = useState<string[]>([DEFAULT_FILE])
+interface EditorProps extends WithConfigProps {
+  defaultFile?: string
+}
+
+const Editor: React.FC<EditorProps> = ({ config: { mainFile } }) => {
+  const [fileStack, setFileStack] = useState<string[]>(
+    mainFile ? [mainFile] : []
+  )
   const [currentFile, setCurrentFile] = useState<string>(fileStack[0])
   const [selectedPath, setSelectedPath] = useState<string>('/')
   const [createFile] = useCreateFileMutation()
@@ -115,4 +119,4 @@ const Editor: React.FC = () => {
   )
 }
 
-export default Editor
+export default withConfig<typeof Editor, EditorProps>(Editor)

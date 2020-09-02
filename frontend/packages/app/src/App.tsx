@@ -1,18 +1,14 @@
 import React, { useEffect, useState } from 'react'
-import { Alert, Button, Col, Layout, Row, Spin } from 'antd'
+import { Button, Col, Layout, Row } from 'antd'
 import { PlaySquareFilled } from '@ant-design/icons'
 import Shell from './Shell'
 import { ProcessType, useCreateProcessMutation } from './generated/graphql'
 import { Terminal } from 'xterm'
-import { WarningOutlined } from '@ant-design/icons'
 
 import './App.less'
 import Editor from './components/Editor'
 import ConnectionStatusBadge from './ConnectionStatusBadge'
-import {
-  ConnectionStatus,
-  useConnectionStatus
-} from './ConnectionStatusProvider'
+import LoadingIndicator from './components/LoadingIndicator'
 
 const { Header, Content, Footer } = Layout
 
@@ -28,11 +24,9 @@ export const BreezeComponent: React.FC<{ title: string }> = props => {
 interface AppProps {}
 
 const App: React.FC<AppProps> = () => {
-  const connectionStatus = useConnectionStatus()
   const [processId, setProcessId] = useState<string>()
-  const [running, setRunning] = useState(false)
   const [runId, setRunId] = useState<string>()
-  const [runCode] = useCreateProcessMutation({
+  const [runCode, { loading: runLoading }] = useCreateProcessMutation({
     variables: { type: ProcessType.Run }
   })
   const [createDefaultProcess] = useCreateProcessMutation({
@@ -49,7 +43,6 @@ const App: React.FC<AppProps> = () => {
   }, [processId, createDefaultProcess])
 
   const onRunClick = () => {
-    setRunning(true)
     runCode().then(resp => {
       if (resp.data) {
         setRunId(resp.data.createProcess)
@@ -62,7 +55,6 @@ const App: React.FC<AppProps> = () => {
     terminal.writeln('Press any key to continue...')
     terminal.onData(() => {
       setRunId(undefined)
-      setRunning(false)
     })
   }
 
@@ -81,7 +73,7 @@ const App: React.FC<AppProps> = () => {
         }}
       >
         <Row>
-          <Col span={8}>
+          <Col span={14}>
             <h1 style={{ color: 'white' }}>
               <img
                 src={process.env.PUBLIC_URL + '/breeze-logo.svg'}
@@ -92,25 +84,11 @@ const App: React.FC<AppProps> = () => {
               breeze
             </h1>
           </Col>
-          <Col span={8} style={{ textAlign: 'center' }}>
-            {connectionStatus !== ConnectionStatus.CONNECTED && (
-              <Alert
-                type="warning"
-                icon={<WarningOutlined />}
-                showIcon
-                message="You are currently disconnected!"
-                style={{
-                  marginTop: 10,
-                  display: 'inline-block'
-                }}
-              />
-            )}
-          </Col>
-          <Col span={8} style={{ textAlign: 'right' }}>
+          <Col span={10}>
             <Button
               icon={<PlaySquareFilled />}
               onClick={onRunClick}
-              loading={running}
+              loading={runLoading || runId !== undefined}
               type="primary"
             >
               Run Code
@@ -130,7 +108,7 @@ const App: React.FC<AppProps> = () => {
               ) : processId ? (
                 <Shell processId={processId} onExit={onProcessExit} />
               ) : (
-                <Spin />
+                <LoadingIndicator />
               )}
             </BreezeComponent>
           </Col>
