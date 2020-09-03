@@ -69,7 +69,7 @@ class ProcessResolver
         }.toCompletionStage()
     }
 
-    fun killProcess(id: UUID) = stopProcess(id).onComplete { println("$id finished with ${it.result()}") }.toCompletionStage()
+    fun killProcess(id: UUID) = stopProcess(id).toCompletionStage()
 
     fun processOutput(id: UUID): Publisher<String> {
         log.info("Subscribing for data of shell $id")
@@ -115,7 +115,6 @@ class ProcessResolver
         vertx.executeBlocking<Int>({ promise ->
             promise.complete(process.close())
         }, { result ->
-            println("Received exec result ${result.result()}")
             exitCodePromise.complete(result.result())
         })
         return@withProcess exitCodePromise.future()
