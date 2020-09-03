@@ -35,17 +35,17 @@ class DockerContainerProcess(
                 .withStdOut(true)
                 .exec(StreamResultCallback(CloseShieldOutputStream(stdoutStream)))
 
-        docker.waitContainerCmd(containerId).exec(object : ResultCallback.Adapter<WaitResponse>() {
-            override fun onNext(response: WaitResponse) {
-                exitCode = response.statusCode
-                exitedCountDownLatch.countDown()
-            }
-        })
-
         try {
             docker.startContainerCmd(containerId).exec()
         } catch (e: NotModifiedException) {
             log.warn("Container $containerId is already running. This is unexpected.")
+        } finally {
+            docker.waitContainerCmd(containerId).exec(object : ResultCallback.Adapter<WaitResponse>() {
+                override fun onNext(response: WaitResponse) {
+                    exitCode = response.statusCode
+                    exitedCountDownLatch.countDown()
+                }
+            })
         }
     }
 

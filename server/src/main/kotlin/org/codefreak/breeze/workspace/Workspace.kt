@@ -36,7 +36,7 @@ abstract class Workspace(
 
     private var mainProcess: Process?
         get() = processMap[MAIN_PROCESS_ID]?.first
-        set(process: Process?) {
+        set(process) {
             // the following log keeps the stdout between main process restarts
             val existing = processMap[MAIN_PROCESS_ID]
             if (process != null) {
@@ -52,7 +52,7 @@ abstract class Workspace(
         }
     private val creationPromise: Promise<Unit> = Promise.promise()
     private var startupPromise: Promise<Process>? = null
-    private val stopPromise: Promise<Unit> = Promise.promise()
+    private var stopPromise: Promise<Unit>? = null
     private val removePromise: Promise<Unit> = Promise.promise()
 
     @Synchronized
@@ -70,6 +70,9 @@ abstract class Workspace(
 
     @Synchronized
     fun start(): Future<Process> {
+        if (status < WorkspaceStatus.CREATED) {
+            throw RuntimeException("Can only start CREATED . Current status is $status")
+        }
         if (status === WorkspaceStatus.STARTING) {
             return startupPromise?.future()
                     ?: throw RuntimeException("Workspace is already starting but has no startup promise.")
@@ -124,17 +127,21 @@ abstract class Workspace(
 
     @Synchronized
     fun stop(): Future<Unit> {
-        // TODO: this is wrong. Workspace can be restarted so there can be multiple stop promise
         if (status >= WorkspaceStatus.STOPPING) {
-            return stopPromise.future()
+            stopPromise?.let {
+                return it.future()
+            }
+            throw IllegalStateException("Workspace is stopping but no promise is present")
         }
         status = WorkspaceStatus.STOPPING
+        val promise = Promise.promise<Unit>()
+        stopPromise = promise
         doStop().onComplete {
             status = WorkspaceStatus.STOPPED
             mainProcess = null
-            stopPromise.complete()
+            promise.complete()
         }
-        return stopPromise.future()
+        return promise.future()
     }
 
     protected abstract fun doStop(): Future<Unit>

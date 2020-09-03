@@ -29,11 +29,7 @@ const Shell: React.FC<ShellProps> = ({ processId, onExit }) => {
   )
 
   useProcessExit(processId, setExitCode, {
-    skip: !terminal,
-    shouldResubscribe: useCallback(
-      options => options.variables.id !== processId || exitCode === undefined,
-      [processId, exitCode]
-    )
+    skip: !terminal
   })
 
   useEffect(() => {
