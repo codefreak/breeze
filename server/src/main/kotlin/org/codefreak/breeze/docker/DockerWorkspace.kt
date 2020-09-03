@@ -1,4 +1,4 @@
-package org.codefreak.breeze.workspace
+package org.codefreak.breeze.docker
 
 import com.github.dockerjava.api.DockerClient
 import com.github.dockerjava.api.async.ResultCallback
@@ -14,11 +14,10 @@ import io.vertx.core.Promise
 import io.vertx.core.Vertx
 import org.codefreak.breeze.BreezeConfiguration
 import org.codefreak.breeze.shell.Process
-import org.codefreak.breeze.shell.docker.DockerContainerProcess
-import org.codefreak.breeze.shell.docker.DockerExecProcess
 import org.codefreak.breeze.util.async
 import org.codefreak.breeze.util.getSurroundingContainerId
 import org.codefreak.breeze.util.workspacePath
+import org.codefreak.breeze.workspace.Workspace
 import org.slf4j.LoggerFactory
 import java.nio.file.Paths
 

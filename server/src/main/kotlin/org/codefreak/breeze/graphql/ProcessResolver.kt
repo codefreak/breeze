@@ -7,14 +7,13 @@ import graphql.kickstart.tools.GraphQLMutationResolver
 import graphql.kickstart.tools.GraphQLSubscriptionResolver
 import io.reactivex.BackpressureStrategy
 import io.reactivex.Flowable
-import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.Vertx
-import io.vertx.ext.web.handler.graphql.VertxDataFetcher
 import org.codefreak.breeze.BreezeConfiguration
 import org.codefreak.breeze.graphql.model.ProcessType
 import org.codefreak.breeze.util.async
+import org.codefreak.breeze.util.shortHex
 import org.codefreak.breeze.util.toCompletionStage
 import org.codefreak.breeze.workspace.Workspace
 import org.reactivestreams.Publisher
@@ -23,7 +22,6 @@ import org.slf4j.LoggerFactory
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.util.UUID
-import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionStage
 import kotlin.concurrent.thread
 
@@ -75,7 +73,7 @@ class ProcessResolver
         log.info("Subscribing for data of shell $id")
         val stdout = workspace.stdout(id) ?: throw IllegalArgumentException("There is no process $id")
         return Flowable.create({ emitter ->
-            val stdoutThread = thread {
+            val stdoutThread = thread(name = "breeze-stdout-stream-${id.shortHex}") {
                 Strings.from(BufferedReader(InputStreamReader(stdout)))
                         .onErrorReturnItem("\u0000")
                         .subscribe(emitter::onNext)
@@ -88,7 +86,7 @@ class ProcessResolver
 
     fun processWait(id: UUID): Publisher<Int> = workspace.withProcess(id) { process ->
         return@withProcess Flowable.create<Int>({ emitter ->
-            val joinThread = thread {
+            val joinThread = thread(name= "breeze-process-wait-${id.shortHex}") {
                 try {
                     log.info("Waiting for process $id to finish")
                     val exitCode = process.join()

@@ -5,6 +5,7 @@ import io.vertx.core.Promise
 import io.vertx.core.Vertx
 import org.codefreak.breeze.io.CachedTeeInputStream
 import org.codefreak.breeze.shell.Process
+import org.codefreak.breeze.util.shortHex
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
 import java.util.*
@@ -92,7 +93,7 @@ abstract class Workspace(
             mainProcess = it
             // join process to keep status synced
             // TODO: this looks ugly and creates a stray thread
-            thread {
+            thread(name = "breeze-workspace-watch-main") {
                 it.join()
                 if (status < WorkspaceStatus.STOPPING) {
                     log.debug("Main process was stopped from outside. Stopping workspace...")
@@ -172,7 +173,7 @@ abstract class Workspace(
             process.start()
             // remove process from map if it exits
             // TODO: this looks ugly and creates a stray thread
-            thread {
+            thread(name = "breeze-workspace-wait-${id.shortHex}") {
                 process.join()
                 log.info("Process $id finished. Removing from process map")
                 processMap.remove(id)?.also { (process, stdout) ->

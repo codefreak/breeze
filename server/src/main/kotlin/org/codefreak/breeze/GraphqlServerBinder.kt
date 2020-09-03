@@ -16,7 +16,7 @@ import org.codefreak.breeze.graphql.ConfigResolver
 import org.codefreak.breeze.graphql.FileResolver
 import org.codefreak.breeze.graphql.GraphQLFactory
 import org.codefreak.breeze.graphql.ProcessResolver
-import org.codefreak.breeze.workspace.DockerWorkspace
+import org.codefreak.breeze.docker.DockerWorkspace
 import org.codefreak.breeze.workspace.Workspace
 import java.net.URI
 

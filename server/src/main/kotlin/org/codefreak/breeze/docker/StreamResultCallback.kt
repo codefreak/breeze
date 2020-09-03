@@ -1,4 +1,4 @@
-package org.codefreak.breeze.shell.docker
+package org.codefreak.breeze.docker
 
 import com.github.dockerjava.api.async.ResultCallback
 import com.github.dockerjava.api.model.Frame

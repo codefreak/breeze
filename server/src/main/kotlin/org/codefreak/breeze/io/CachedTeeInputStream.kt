@@ -67,7 +67,7 @@ class CachedTeeInputStream(private val source: InputStream, initialData: ByteArr
             throw IllegalStateException("Tee is already being drained")
         }
         draining = true
-        return thread {
+        return thread(name = "breeze-tee-drain-${this.hashCode()}") {
             var alive = true
             while (alive) {
                 try {
