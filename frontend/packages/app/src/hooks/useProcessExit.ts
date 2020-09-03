@@ -4,6 +4,7 @@ import {
   useProcessWaitSubscription
 } from '../generated/graphql'
 import * as ApolloReactHooks from '@apollo/react-hooks'
+import { useEffect } from 'react'
 
 const useProcessExit = (
   id: string,
@@ -13,15 +14,16 @@ const useProcessExit = (
     ProcessWaitSubscriptionVariables
   >
 ) => {
-  useProcessWaitSubscription({
+  const { data } = useProcessWaitSubscription({
     ...additionalOptions,
-    variables: { id },
-    onSubscriptionData: sub => {
-      if (sub.subscriptionData.data?.processWait !== undefined) {
-        onExit(sub.subscriptionData.data?.processWait)
-      }
-    }
+    variables: { id }
   })
+
+  useEffect(() => {
+    if (data?.processWait !== undefined) {
+      onExit(data.processWait)
+    }
+  }, [data, onExit])
 }
 
 export default useProcessExit

@@ -2,6 +2,10 @@ mutation CreateProcess($type: ProcessType!) {
   createProcess(type: $type)
 }
 
+mutation StopProcess($id: ID!) {
+  killProcess(id: $id)
+}
+
 mutation WriteProcessData($id: ID!, $data: String!) {
   writeProcess(id: $id, data: $data)
 }

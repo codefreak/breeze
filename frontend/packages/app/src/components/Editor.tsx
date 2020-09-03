@@ -48,7 +48,6 @@ const Editor: React.FC<EditorProps> = ({ config: { mainFile } }) => {
 
   const onClick: FileTreeProps['onClick'] = useCallback(
     (_, node) => {
-      console.log(node)
       if (!node) {
         setSelectedPath('/')
         return

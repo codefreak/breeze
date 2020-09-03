@@ -1,6 +1,5 @@
 import { Config, useUseConfigQuery } from '../generated/graphql'
 import React from 'react'
-import { Spin } from 'antd'
 import LoadingIndicator from "../components/LoadingIndicator";
 
 export interface WithConfigProps {

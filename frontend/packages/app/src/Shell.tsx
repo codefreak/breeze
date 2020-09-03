@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { Terminal } from 'xterm'
 import useProcessWriteData from './hooks/useProcessWriteData'
 import XTerm from './components/XTerm'
@@ -28,7 +28,13 @@ const Shell: React.FC<ShellProps> = ({ processId, onExit }) => {
     { skip: !terminal }
   )
 
-  useProcessExit(processId, setExitCode, { skip: !terminal })
+  useProcessExit(processId, setExitCode, {
+    skip: !terminal,
+    shouldResubscribe: useCallback(
+      options => options.variables.id !== processId || exitCode === undefined,
+      [processId, exitCode]
+    )
+  })
 
   useEffect(() => {
     if (exitCode !== undefined && terminal && onExit) {

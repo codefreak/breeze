@@ -7,10 +7,14 @@ import graphql.kickstart.tools.GraphQLMutationResolver
 import graphql.kickstart.tools.GraphQLSubscriptionResolver
 import io.reactivex.BackpressureStrategy
 import io.reactivex.Flowable
+import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.Promise
+import io.vertx.core.Vertx
+import io.vertx.ext.web.handler.graphql.VertxDataFetcher
 import org.codefreak.breeze.BreezeConfiguration
 import org.codefreak.breeze.graphql.model.ProcessType
+import org.codefreak.breeze.util.async
 import org.codefreak.breeze.util.toCompletionStage
 import org.codefreak.breeze.workspace.Workspace
 import org.reactivestreams.Publisher
@@ -19,6 +23,7 @@ import org.slf4j.LoggerFactory
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.util.UUID
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionStage
 import kotlin.concurrent.thread
 
@@ -26,7 +31,8 @@ import kotlin.concurrent.thread
 class ProcessResolver
 @Inject constructor(
         private val config: BreezeConfiguration,
-        private val workspace: Workspace
+        private val workspace: Workspace,
+        private val vertx: Vertx
 ) : GraphQLMutationResolver, GraphQLSubscriptionResolver {
     companion object {
         private val log: Logger = LoggerFactory.getLogger(ProcessResolver::class.java)
@@ -56,14 +62,14 @@ class ProcessResolver
         }
     }
 
-    fun resizeProcess(id: UUID, cols: Int, rows: Int): Boolean = workspace.withProcess(id) { process ->
-        process.resize(cols, rows)
-        true
+    fun resizeProcess(id: UUID, cols: Int, rows: Int): CompletionStage<Boolean> = workspace.withProcess(id) { process ->
+        async(vertx) {
+            process.resize(cols, rows)
+            true
+        }.toCompletionStage()
     }
 
-    fun killProcess(id: UUID) {
-        stopProcess(id)
-    }
+    fun killProcess(id: UUID) = stopProcess(id).onComplete { println("$id finished with ${it.result()}") }.toCompletionStage()
 
     fun processOutput(id: UUID): Publisher<String> {
         log.info("Subscribing for data of shell $id")
@@ -84,6 +90,7 @@ class ProcessResolver
         return@withProcess Flowable.create<Int>({ emitter ->
             val joinThread = thread {
                 try {
+                    log.info("Waiting for process $id to finish")
                     val exitCode = process.join()
                     log.info("Process $id finished with exit code $exitCode")
                     if (!emitter.isCancelled) {
@@ -100,11 +107,17 @@ class ProcessResolver
         }, BackpressureStrategy.BUFFER).onErrorReturnItem(-1)
     }
 
-    private fun stopProcess(id: UUID): CompletionStage<Int> = workspace.withProcess(id) { process ->
+    private fun stopProcess(id: UUID): Future<Int> = workspace.withProcess(id) { process ->
         if (id == Workspace.MAIN_PROCESS_ID) {
-            return@withProcess Future.succeededFuture(-1).toCompletionStage()
+            return@withProcess Future.succeededFuture(-1)
         }
-        process.close()
-        return@withProcess Future.succeededFuture(process.close()).toCompletionStage()
+        val exitCodePromise = Promise.promise<Int>()
+        vertx.executeBlocking<Int>({ promise ->
+            promise.complete(process.close())
+        }, { result ->
+            println("Received exec result ${result.result()}")
+            exitCodePromise.complete(result.result())
+        })
+        return@withProcess exitCodePromise.future()
     }
 }

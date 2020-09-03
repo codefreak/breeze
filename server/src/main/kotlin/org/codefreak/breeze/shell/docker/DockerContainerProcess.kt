@@ -11,6 +11,7 @@ import org.codefreak.breeze.shell.Process
 import org.slf4j.LoggerFactory
 import java.io.PipedInputStream
 import java.io.PipedOutputStream
+import java.util.concurrent.CountDownLatch
 
 class DockerContainerProcess(
         private val docker: DockerClient,
@@ -23,6 +24,8 @@ class DockerContainerProcess(
     override val stdin = PipedOutputStream()
     private val stdoutStream = PipedOutputStream()
     override val stdout = PipedInputStream(stdoutStream)
+    private var exitCode: Int? = null
+    private val exitedCountDownLatch = CountDownLatch(1)
 
     override fun start() {
         docker.attachContainerCmd(containerId)
@@ -31,6 +34,13 @@ class DockerContainerProcess(
                 .withStdErr(true)
                 .withStdOut(true)
                 .exec(StreamResultCallback(CloseShieldOutputStream(stdoutStream)))
+
+        docker.waitContainerCmd(containerId).exec(object : ResultCallback.Adapter<WaitResponse>() {
+            override fun onNext(response: WaitResponse) {
+                exitCode = response.statusCode
+                exitedCountDownLatch.countDown()
+            }
+        })
 
         try {
             docker.startContainerCmd(containerId).exec()
@@ -71,12 +81,7 @@ class DockerContainerProcess(
     }
 
     override fun join(): Int {
-        var exitCode: Int = -1
-        docker.waitContainerCmd(containerId).exec(object : ResultCallback.Adapter<WaitResponse>() {
-            override fun onNext(response: WaitResponse) {
-                exitCode = response.statusCode
-            }
-        }).awaitCompletion()
-        return exitCode
+        exitedCountDownLatch.await()
+        return this.exitCode ?: -1
     }
 }

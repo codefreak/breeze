@@ -1,8 +1,12 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { Button, Col, Layout, Row } from 'antd'
-import { PlaySquareFilled } from '@ant-design/icons'
+import { PlayCircleFilled, StopFilled } from '@ant-design/icons'
 import Shell from './Shell'
-import { ProcessType, useCreateProcessMutation } from './generated/graphql'
+import {
+  ProcessType,
+  useCreateProcessMutation,
+  useStopProcessMutation
+} from './generated/graphql'
 import { Terminal } from 'xterm'
 
 import './App.less'
@@ -26,9 +30,11 @@ interface AppProps {}
 const App: React.FC<AppProps> = () => {
   const [processId, setProcessId] = useState<string>()
   const [runId, setRunId] = useState<string>()
+  const [runExited, setRunExited] = useState<boolean>(false)
   const [runCode, { loading: runLoading }] = useCreateProcessMutation({
     variables: { type: ProcessType.Run }
   })
+  const [stopRun, { loading: stopLoading }] = useStopProcessMutation()
   const [createDefaultProcess] = useCreateProcessMutation({
     variables: { type: ProcessType.Default }
   })
@@ -42,21 +48,60 @@ const App: React.FC<AppProps> = () => {
     }
   }, [processId, createDefaultProcess])
 
-  const onRunClick = () => {
-    runCode().then(resp => {
-      if (resp.data) {
-        setRunId(resp.data.createProcess)
-      }
-    })
-  }
+  const exitRunMode = useCallback(() => {
+    setRunId(undefined)
+    setRunExited(false)
+  }, [setRunId, setRunExited])
 
-  const onRunExit = (terminal: Terminal, exitCode: number) => {
-    terminal.writeln(`\nProcess finished with exit code ${exitCode}`)
-    terminal.writeln('Press any key to continue...')
-    terminal.onData(() => {
-      setRunId(undefined)
-    })
-  }
+  const onRunToggleClick = useCallback(() => {
+    // if the terminal is in "Run exited with XYZ" mode simply exit this state
+    if (runExited) {
+      exitRunMode()
+      return
+    }
+
+    // if we are in a run session stop it
+    if (runId && !stopLoading) {
+      // server will trigger a process exit event so no need to handle the response here
+      stopRun({ variables: { id: runId } })
+      return
+    }
+
+    // start a run instance if nothing has been triggered yet
+    if (!runLoading && !runId) {
+      runCode().then(resp => {
+        if (resp.data) {
+          setRunId(resp.data.createProcess)
+        }
+      })
+    }
+  }, [
+    runId,
+    stopRun,
+    runLoading,
+    runCode,
+    setRunId,
+    runExited,
+    exitRunMode,
+    stopLoading
+  ])
+
+  const onRunExit = useCallback(
+    (terminal: Terminal, exitCode: number) => {
+      if (exitCode === -1) {
+        // premature exit (aka. stopped/killed)
+        setRunId(undefined)
+        return
+      }
+      setRunExited(true)
+      terminal.writeln(`\nProcess finished with exit code ${exitCode}`)
+      terminal.writeln('Press any key to continue...')
+      terminal.onData(() => {
+        exitRunMode()
+      })
+    },
+    [setRunId, setRunExited, exitRunMode]
+  )
 
   const onProcessExit = (terminal: Terminal, exitCode: number) => {
     // force process re-creation
@@ -86,12 +131,14 @@ const App: React.FC<AppProps> = () => {
           </Col>
           <Col span={10}>
             <Button
-              icon={<PlaySquareFilled />}
-              onClick={onRunClick}
-              loading={runLoading || runId !== undefined}
-              type="primary"
+              loading={runLoading || stopLoading}
+              icon={runId ? <StopFilled /> : <PlayCircleFilled />}
+              onClick={onRunToggleClick}
+              type={'primary'}
+              danger={!!runId}
+              color={'red'}
             >
-              Run Code
+              {runId ? 'Stop run' : 'Run code'}
             </Button>
           </Col>
         </Row>

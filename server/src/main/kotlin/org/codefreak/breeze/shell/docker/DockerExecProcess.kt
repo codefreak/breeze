@@ -19,6 +19,11 @@ class DockerExecProcess(
     private val stdoutWriter = PipedOutputStream()
     override val stdout = PipedInputStream(stdoutWriter)
     private val finishedLatch = CountDownLatch(1)
+    private var exitCode: Int? = null
+    private var resultCallback= StreamResultCallback(stdoutWriter) {
+        // This marks the end of the process
+        finishedLatch.countDown()
+    }
 
     override fun start() {
         try {
@@ -26,10 +31,7 @@ class DockerExecProcess(
                     .withTty(true)
                     .withDetach(false)
                     .withStdIn(PipedInputStream(stdin))
-                    .exec(StreamResultCallback(stdoutWriter) {
-                        log.info("exec output finished")
-                        finishedLatch.countDown()
-                    })
+                    .exec(resultCallback)
         } catch (e: Exception) {
             finishedLatch.countDown()
             throw e
@@ -37,10 +39,14 @@ class DockerExecProcess(
     }
 
     override fun close(): Int {
-        return if (finishedLatch.count == 0L) {
-            log.warn("Signals for docker exec processes are not supported. Closing stdin instead")
-            //stdin.close()
-            join()
+        return if (finishedLatch.count == 1L) {
+            // There is no way to stop or send signals to Docker Exec via API
+            // we simply close stream and mark this instance as finished.
+            // Additionally, there is an issue with docker-java UNIX streams that will keep a stray thread
+            // if the exec instance does not produce any output. The underlying stream will block forever.
+            resultCallback.close()
+            finishedLatch.countDown()
+            return join()
         } else {
             -1
         }
@@ -54,6 +60,17 @@ class DockerExecProcess(
 
     override fun join(): Int {
         finishedLatch.await()
-        return docker.inspectExecCmd(execId).exec()?.exitCodeLong?.toInt() ?: -1
+        synchronized(this) {
+            this.exitCode?.let {
+                return it
+            }
+            val newExitCode = fetchExitCode() ?: -1
+            this.exitCode = newExitCode
+            return newExitCode
+        }
+    }
+
+    private fun fetchExitCode(): Int? {
+        return docker.inspectExecCmd(execId).exec()?.exitCodeLong?.toInt()
     }
 }

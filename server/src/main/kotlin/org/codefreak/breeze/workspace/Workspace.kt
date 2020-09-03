@@ -123,6 +123,7 @@ abstract class Workspace(
 
     @Synchronized
     fun stop(): Future<Unit> {
+        // TODO: this is wrong. Workspace can be restarted so there can be multiple stop promise
         if (status >= WorkspaceStatus.STOPPING) {
             return stopPromise.future()
         }
@@ -173,7 +174,12 @@ abstract class Workspace(
             // TODO: this looks ugly and creates a stray thread
             thread {
                 process.join()
-                processMap.remove(id)
+                log.info("Process $id finished. Removing from process map")
+                processMap.remove(id)?.also { (process, stdout) ->
+                    // close io streams properly
+                    process?.stdin?.close()
+                    stdout.close()
+                }
             }
             Future.succeededFuture(id)
         }
