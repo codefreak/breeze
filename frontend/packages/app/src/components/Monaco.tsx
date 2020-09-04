@@ -17,7 +17,15 @@ interface MonacoProps {
 const DEFAULT_MONACO_OPTIONS: EditorProps['options'] = {
   automaticLayout: true,
   minimap: { enabled: false },
-  contextmenu: false
+  contextmenu: false,
+  lineNumbersMinChars: 2,
+  scrollBeyondLastLine: false,
+  renderLineHighlight: 'all',
+  scrollbar: {
+    vertical: 'auto',
+    verticalScrollbarSize: 10,
+    horizontalScrollbarSize: 10
+  }
 }
 
 const Monaco: React.FC<MonacoProps> = ({ path, monaco }) => {
@@ -57,6 +65,7 @@ const Monaco: React.FC<MonacoProps> = ({ path, monaco }) => {
 
   return (
     <MonacoComp
+      theme="light"
       options={DEFAULT_MONACO_OPTIONS}
       editorDidMount={(_, monaco) => {
         setMonacoInstance(monaco)
