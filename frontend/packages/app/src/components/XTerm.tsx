@@ -14,7 +14,7 @@ const XTermThemeLight: ITheme = {
   background: '#f5f5f5',
   cursor: '#303030',
   cursorAccent: '#505050',
-  selection: '#f5f5f5',
+  selection: '#05303030',
   black: '#151515',
   red: '#ac4142',
   green: '#90a959',

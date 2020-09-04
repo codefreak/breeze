@@ -8,7 +8,7 @@ import org.codefreak.breeze.shell.Process
 import org.codefreak.breeze.util.shortHex
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
-import java.util.*
+import java.util.UUID
 import kotlin.concurrent.thread
 import kotlin.properties.Delegates
 
@@ -41,6 +41,7 @@ abstract class Workspace(
             val existing = processMap[MAIN_PROCESS_ID]
             if (process != null) {
                 val existingOutput = existing?.second?.cache?.toByteArray()
+                        ?: getWelcomeMessage().replace("\n", "\r\n").toByteArray()
                 processMap[MAIN_PROCESS_ID] = Pair(process, CachedTeeInputStream(process.stdout, existingOutput))
             } else {
                 if (existing != null) {
@@ -194,4 +195,15 @@ abstract class Workspace(
     }
 
     protected abstract fun doExec(cmd: Array<String>, env: Map<String, String>? = null): Future<Process>
+
+    // TODO: read this from config
+    protected open fun getWelcomeMessage(): String {
+        return """
+  Hi there!
+  This is an interactive command prompt to try out commands.
+
+  Use the Play button ▶️ above to run your program.
+
+    """
+    }
 }

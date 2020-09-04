@@ -92,9 +92,9 @@ class DockerWorkspace
     }
 
     private fun createContainer(imageName: String, cmd: Array<String>, env: Map<String, String>?) = async(vertx) {
-        val volume = Volume(config.dockerWorkingdir)
+        val volume = Volume(config.dockerWorkingDir)
         val workspaceSource = getWorkspaceDirBindSource()
-        log.info("Mounting $workspaceSource to ${config.dockerWorkingdir}")
+        log.info("Mounting $workspaceSource to ${config.dockerWorkingDir}")
         val container = docker.createContainerCmd(imageName)
                 .withCmd(*cmd)
                 .withTty(true)
@@ -102,7 +102,7 @@ class DockerWorkspace
                 .withStdinOpen(true)
                 .withAttachStdout(true)
                 .withHostName(config.workspaceHostname)
-                .withWorkingDir(config.dockerWorkingdir)
+                .withWorkingDir(config.dockerWorkingDir)
                 .withVolumes(volume)
                 .withHostConfig(
                         HostConfig.newHostConfig()
@@ -141,7 +141,7 @@ class DockerWorkspace
     private fun createExec(containerId: String, cmd: Array<String>, env: Map<String, String>?) = async(vertx) {
         docker.execCreateCmd(containerId)
                 .withCmd(*cmd)
-                .withWorkingDir(config.dockerWorkingdir)
+                .withWorkingDir(config.dockerWorkingDir)
                 .withTty(true)
                 .withAttachStdout(true)
                 .withAttachStdin(true)

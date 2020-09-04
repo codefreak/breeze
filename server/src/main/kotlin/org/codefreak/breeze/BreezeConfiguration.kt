@@ -9,7 +9,7 @@ class BreezeConfiguration {
     var workspaceHostname = "breeze"
     var workspaceDockerImage = "python:3.8.2-buster"
     var workspaceCodePath = "/workspace"
-    var dockerWorkingdir = workspaceCodePath
+    var dockerWorkingDir = workspaceCodePath
     var mainFile = "main.py"
     var mainFileContent = """
         def main():
@@ -20,9 +20,12 @@ class BreezeConfiguration {
         if __name__ == '__main__':
             main()
     """.trimIndent()
-    var workspaceReplCmd = arrayOf("/usr/bin/env", "bash", "-i")
+    var workspaceReplCmd = arrayOf("/usr/bin/env", "bash", "--noprofile", "--norc", "-i")
     val defaultEnv: Map<String, String> = mapOf(
-            "TERM" to "xterm"
+            "TERM" to "xterm",
+            "PS1" to "\\[\\e[32m\\]\\W\\[\\e[m\\] \\[\\e[34m\\]\\\\\$\\[\\e[m\\] ",
+            "HOME" to workspaceCodePath
+    // "PROMPT_COMMAND" to "PS1 = \"\\[\\e[32m\\]\\W\\[\\e[m\\] \\[\\e[34m\\]\\\\\$\\[\\e[m\\] \""
     )
 
     // TODO: substitution of commands? or pass to /bin/bash -c to parse environment variables
