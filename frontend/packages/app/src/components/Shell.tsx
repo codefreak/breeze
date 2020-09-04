@@ -1,10 +1,10 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { Terminal } from 'xterm'
-import useProcessWriteData from './hooks/useProcessWriteData'
-import XTerm from './components/XTerm'
-import useProcessOutput from './hooks/useProcessOutput'
-import useProcessExit from './hooks/useProcessExit'
-import useProcessResize from './hooks/useProcessResize'
+import useProcessWriteData from '../hooks/useProcessWriteData'
+import XTerm from './XTerm'
+import useProcessOutput from '../hooks/useProcessOutput'
+import useProcessExit from '../hooks/useProcessExit'
+import useProcessResize from '../hooks/useProcessResize'
 
 export interface ShellProps {
   processId: string

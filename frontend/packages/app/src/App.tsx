@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { Button, Col, Layout, Row } from 'antd'
 import { PlayCircleFilled, StopFilled } from '@ant-design/icons'
-import Shell from './Shell'
+import Shell from './components/Shell'
 import {
   ProcessType,
   useCreateProcessMutation,
@@ -11,7 +11,7 @@ import { Terminal } from 'xterm'
 
 import './App.less'
 import Editor from './components/Editor'
-import ConnectionStatusBadge from './ConnectionStatusBadge'
+import ConnectionStatusBadge from './components/ConnectionStatusBadge'
 import LoadingIndicator from './components/LoadingIndicator'
 
 const { Header, Content, Footer } = Layout

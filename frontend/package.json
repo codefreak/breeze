@@ -19,7 +19,7 @@
   ],
   "scripts": {
     "tsc": "yarn workspaces run tsc",
-    "start": "yarn run tsc && yarn workspace @codefreak/breeze-app start",
+    "start": "yarn workspace @codefreak/breeze-app generate && yarn run tsc && yarn workspace @codefreak/breeze-app start",
     "build": "yarn run tsc && yarn workspace @codefreak/breeze-app build"
   }
 }

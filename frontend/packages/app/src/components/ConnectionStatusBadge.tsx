@@ -1,11 +1,11 @@
-import {
-  ConnectionStatus,
-  useConnectionStatus
-} from './ConnectionStatusProvider'
+import useConnectionStatus, {
+  ConnectionStatus
+} from '../hooks/useApolloConnectionStatus'
 import React from 'react'
 import { Tag } from 'antd'
 
 const connectionStatusLabels = {
+  [ConnectionStatus.UNKNOWN]: '???',
   [ConnectionStatus.DISCONNECTED]: 'Disconnected!',
   [ConnectionStatus.CONNECTING]: 'Connecting…',
   [ConnectionStatus.CONNECTED]: 'Connected',
@@ -13,6 +13,7 @@ const connectionStatusLabels = {
 }
 
 const connectionStatusColors = {
+  [ConnectionStatus.UNKNOWN]: 'default',
   [ConnectionStatus.DISCONNECTED]: 'red',
   [ConnectionStatus.CONNECTING]: 'orange',
   [ConnectionStatus.CONNECTED]: 'green',
