@@ -156,7 +156,7 @@ const FileTree: React.FC<FileTreeProps> = ({ onCreate, ...treeProps }) => {
   const treeData = sortTree(
     listToTreeByPath(
       data.files.map(e => ({
-        ...e,
+        path: e.path,
         isLeaf: e.__typename === 'File',
         title: basename(e.path),
         icon: e.__typename === 'File' ? <FileOutlined /> : <FolderOutlined />

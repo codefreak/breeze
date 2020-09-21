@@ -52,7 +52,8 @@ const Editor: React.FC<EditorProps> = ({ config: { mainFile } }) => {
         setSelectedPath('/')
         return
       }
-      const path = node.key.toString()
+      const path = node.key.toString().replace(/^[\\/.]+/, '')
+      console.log(path)
       if (!node.isLeaf) {
         setSelectedPath(path)
         return
