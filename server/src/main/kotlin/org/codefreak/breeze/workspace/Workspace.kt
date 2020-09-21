@@ -5,7 +5,6 @@ import io.vertx.core.Promise
 import io.vertx.core.Vertx
 import org.codefreak.breeze.io.CachedTeeInputStream
 import org.codefreak.breeze.shell.Process
-import org.codefreak.breeze.util.shortHex
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
 import java.util.UUID
@@ -112,6 +111,12 @@ abstract class Workspace(
 
     protected abstract fun doStart(): Future<out Process>
 
+    fun restart(): Future<Process> {
+        return stop().compose {
+            start()
+        }
+    }
+
     fun stdout(processId: UUID) = processMap[processId]?.second?.let {
         try {
             it.drain()
@@ -119,7 +124,7 @@ abstract class Workspace(
             // stdout is already being drained
         }
         it.split()
-    }
+    } ?: throw IllegalArgumentException("No process $processId")
 
     fun <T> withProcess(processId: UUID, block: (process: Process) -> T): T {
         val process = processMap[processId]?.first ?: throw IllegalArgumentException("No process $processId")
@@ -171,30 +176,30 @@ abstract class Workspace(
     protected abstract fun doRemove(): Future<Unit>
 
     @Synchronized
-    fun exec(cmd: Array<String>, env: Map<String, String>? = null): Future<UUID> {
+    fun exec(cmd: Array<String>, env: Map<String, String>? = null, root: Boolean = false): Future<UUID> {
         if (status !== WorkspaceStatus.RUNNING) {
             return Future.failedFuture(RuntimeException("Can only start processes in running workspaces"))
         }
-        return doExec(cmd, env).compose { process ->
+        return doExec(cmd, env, root).compose { process ->
             val id = UUID.randomUUID()
             processMap[id] = Pair(process, CachedTeeInputStream(process.stdout))
             process.start()
             // remove process from map if it exits
             // TODO: this looks ugly and creates a stray thread
-            thread(name = "breeze-workspace-wait-${id.shortHex}") {
-                process.join()
-                log.info("Process $id finished. Removing from process map")
+            /*thread(name = "breeze-workspace-wait-${id.shortHex}") {
+                val exitCode = process.join()
+                log.info("Process $id finished with $exitCode. Removing from process map")
                 processMap.remove(id)?.also { (process, stdout) ->
                     // close io streams properly
-                    process?.stdin?.close()
-                    stdout.close()
+                    //process?.stdin?.close()
+                    //stdout.close()
                 }
-            }
+            }*/
             Future.succeededFuture(id)
         }
     }
 
-    protected abstract fun doExec(cmd: Array<String>, env: Map<String, String>? = null): Future<Process>
+    protected abstract fun doExec(cmd: Array<String>, env: Map<String, String>? = null, root: Boolean = false): Future<Process>
 
     // TODO: read this from config
     protected open fun getWelcomeMessage(): String {

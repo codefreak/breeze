@@ -42,6 +42,12 @@ class CachedTeeInputStream(private val source: InputStream, initialData: ByteArr
 
     override fun available(): Int = source.available()
 
+    override fun close() {
+        source.close()
+        dynamicTeeOutput.close()
+        super.close()
+    }
+
     /**
      * Get another readable output that contains cache and will continue with underlying InputStream
      * Warning: You should read the InputStream on a separate thread
@@ -75,6 +81,7 @@ class CachedTeeInputStream(private val source: InputStream, initialData: ByteArr
                     dynamicTeeOutput.flush()
                 } catch (e: IOException) {
                     alive = false
+                    dynamicTeeOutput.close()
                 }
             }
         }

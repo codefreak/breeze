@@ -88,7 +88,7 @@ class LocalWorkspace(
         return promise.future()
     }
 
-    override fun doExec(cmd: Array<String>, env: Map<String, String>?): Future<Process> {
+    override fun doExec(cmd: Array<String>, env: Map<String, String>?, root: Boolean): Future<Process> {
         // TODO: Store processes and kill all of them on stop
         return Future.succeededFuture(createLocalProcess(cmd, env))
     }

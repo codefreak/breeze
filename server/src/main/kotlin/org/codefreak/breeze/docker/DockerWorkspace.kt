@@ -80,8 +80,8 @@ class DockerWorkspace
         return removeContainer(it)
     }
 
-    override fun doExec(cmd: Array<String>, env: Map<String, String>?): Future<Process> = withContainerId { id ->
-        return createExec(id, cmd, env).map { exec ->
+    override fun doExec(cmd: Array<String>, env: Map<String, String>?, root: Boolean): Future<Process> = withContainerId { id ->
+        return createExec(id, cmd, env, root).map { exec ->
             log.debug("Created exec instance with '${cmd.joinToString(" ")}' on container $id")
             DockerExecProcess(docker, exec.id)
         }
@@ -104,6 +104,7 @@ class DockerWorkspace
                 .withHostName(config.workspaceHostname)
                 .withWorkingDir(config.dockerWorkingDir)
                 .withVolumes(volume)
+                .withUser("${config.dockerUid}:${config.dockerGid}")
                 .withHostConfig(
                         HostConfig.newHostConfig()
                                 .withBinds(
@@ -138,7 +139,7 @@ class DockerWorkspace
         docker.removeContainerCmd(containerId).exec()
     }
 
-    private fun createExec(containerId: String, cmd: Array<String>, env: Map<String, String>?) = async(vertx) {
+    private fun createExec(containerId: String, cmd: Array<String>, env: Map<String, String>?, root: Boolean) = async(vertx) {
         docker.execCreateCmd(containerId)
                 .withCmd(*cmd)
                 .withWorkingDir(config.dockerWorkingDir)
@@ -146,6 +147,11 @@ class DockerWorkspace
                 .withAttachStdout(true)
                 .withAttachStdin(true)
                 .withEnv(env?.toKeyValueList() ?: listOf())
+                .apply {
+                    if (root) {
+                        withUser("root:root")
+                    }
+                }
                 .exec()
     }
 

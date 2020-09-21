@@ -13,12 +13,13 @@ import io.vertx.ext.web.handler.graphql.ApolloWSHandler
 import io.vertx.ext.web.handler.graphql.ApolloWSOptions
 import io.vertx.ext.web.handler.graphql.GraphQLHandler
 import org.codefreak.breeze.graphql.FilesService
+import org.codefreak.breeze.util.async
 import org.codefreak.breeze.vertx.FilesystemEvent
 import org.codefreak.breeze.vertx.FilesystemEventCodec
 import org.codefreak.breeze.vertx.FilesystemWatcher
 import org.codefreak.breeze.workspace.Workspace
 import org.slf4j.LoggerFactory
-import kotlin.concurrent.thread
+import java.util.stream.Collectors
 
 @Singleton
 class GraphqlServerVerticle
@@ -45,8 +46,31 @@ class GraphqlServerVerticle
         }
 
         log.info("Initializing workspace")
-        workspace.create(config.workspaceReplCmd, config.defaultEnv)
-        log.info("Starting workspace")
+        workspace.create(config.workspaceReplCmd, config.defaultEnv).compose {
+            log.info("Starting workspace")
+            workspace.start()
+        }.compose {
+            log.info("Provisioning workspace")
+            workspace.exec(arrayOf("/bin/sh", "-e", "-c", config.provisionScript), root = true)
+        }.compose { processUid ->
+            val stdout = workspace.stdout(processUid)
+            workspace.withProcess(processUid) { process ->
+                async(vertx) {
+                    log.info("Waiting for provisioning to finish...")
+                    Triple(stdout, process, process.join())
+                }
+            }
+        }.compose { (stdout, process, exitCode) ->
+            if (exitCode == 0) {
+                log.info("Provisioning finished successfully. ")
+            } else {
+                val output = stdout.bufferedReader().lines().collect(Collectors.joining())
+                log.warn("Provisioning failed: $output")
+            }
+            Future.succeededFuture(process)
+        }.onFailure { t ->
+            log.error("Provisioning failed: " + t.message)
+        }
 
         log.info("Initializing default file ${config.mainFile}")
         filesService.writeFile(workspace.path.resolve(config.mainFile), config.mainFileContent)
