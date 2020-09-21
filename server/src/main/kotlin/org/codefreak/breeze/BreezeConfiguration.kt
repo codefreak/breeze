@@ -25,8 +25,7 @@ class BreezeConfiguration {
     var workspaceReplCmd = arrayOf("/usr/bin/env", "bash", "--noprofile", "--norc", "-i")
     val defaultEnv: Map<String, String> = mapOf(
             "TERM" to "xterm",
-            "PS1" to "\\[\\e[32m\\]\\W\\[\\e[m\\] \\[\\e[34m\\]\\\\\$\\[\\e[m\\] ",
-            "HOME" to workspaceCodePath
+            "PS1" to "\\[\\e[32m\\]\\W\\[\\e[m\\] \\[\\e[34m\\]\\\\\$\\[\\e[m\\] "
     // "PROMPT_COMMAND" to "PS1 = \"\\[\\e[32m\\]\\W\\[\\e[m\\] \\[\\e[34m\\]\\\\\$\\[\\e[m\\] \""
     )
 
