@@ -104,10 +104,10 @@ const App: React.FC<AppProps> = () => {
   )
 
   const onProcessExit = (terminal: Terminal, exitCode: number) => {
-    // force process re-creation but throttle reconnection by 1sec
+    // force process re-creation but throttle reconnection by 100ms
     setTimeout(() => {
       setProcessId(undefined)
-    }, 1000)
+    }, 100)
   }
 
   return (
