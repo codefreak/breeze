@@ -1,53 +1,55 @@
-import { common, listToTreeByProperty, sortTree, TreeNode } from "./common";
+import { listToTreeByProperty, TreeNode } from './common'
 
 interface ListItemType {
-  id: number;
-  parentId: number | undefined;
+  id: number
+  parentId: number | undefined
 }
 
 const TEST_LIST: ListItemType[] = [
   { id: 0, parentId: undefined }, // 0
   { id: 1, parentId: 0 }, // 0-1
   { id: 2, parentId: 0 }, // 0-2
-  { id: 3, parentId: 2 }, // 0-2-3
-];
+  { id: 3, parentId: 2 } // 0-2-3
+]
 
-describe("listToTree", () => {
-  it("returns empty tree for empty input", () => {
+type TreeItem = ListItemType & TreeNode<ListItemType>
+
+describe('listToTreeByProperty', () => {
+  it('returns empty tree for empty input', () => {
     expect(
-      listToTreeByProperty([] as ListItemType[], "id", "parentId")
-    ).toEqual([]);
-  });
+      listToTreeByProperty([] as ListItemType[], 'id', 'parentId')
+    ).toEqual([])
+  })
 
-  it("nests children correctly", () => {
-    const rootNode: TreeNode<ListItemType> = {
+  it('nests children correctly', () => {
+    const rootNode: TreeItem = {
+      ...TEST_LIST[0],
       key: 0,
-      node: TEST_LIST[0],
-      children: [],
-    };
-    const child01: TreeNode<ListItemType> = {
+      children: []
+    }
+    const child01: TreeItem = {
+      ...TEST_LIST[1],
       key: 1,
-      node: TEST_LIST[1],
       children: [],
-      parent: rootNode,
-    };
-    const child02: TreeNode<ListItemType> = {
+      parent: rootNode
+    }
+    const child02: TreeItem = {
+      ...TEST_LIST[2],
       key: 2,
-      node: TEST_LIST[2],
       children: [],
-      parent: rootNode,
-    };
-    const child023: TreeNode<ListItemType> = {
+      parent: rootNode
+    }
+    const child023: TreeItem = {
+      ...TEST_LIST[3],
       key: 3,
-      node: TEST_LIST[3],
       children: [],
-      parent: child02,
-    };
-    rootNode.children.push(child01, child02);
-    child02.children.push(child023);
+      parent: child02
+    }
+    rootNode.children.push(child01, child02)
+    child02.children.push(child023)
 
-    expect(listToTreeByProperty(TEST_LIST, "id", "parentId")).toStrictEqual([
-      rootNode,
-    ]);
-  });
-});
+    expect(listToTreeByProperty(TEST_LIST, 'id', 'parentId')).toStrictEqual([
+      rootNode
+    ])
+  })
+})

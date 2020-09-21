@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Terminal } from 'xterm'
 import useProcessWriteData from '../hooks/useProcessWriteData'
 import XTerm from './XTerm'

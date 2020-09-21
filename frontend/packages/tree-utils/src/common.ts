@@ -1,63 +1,62 @@
 // allowed object index types
-export type IndexType = string | number;
+export type IndexType = string | number
 export type PropertiesOfType<T, S> = {
-  [K in keyof T]: T[K] extends S ? K : never;
-}[keyof T];
+  [K in keyof T]: T[K] extends S ? K : never
+}[keyof T]
 
 export interface TreeNode<T> {
-  key: IndexType;
-  node: T;
-  children: TreeNode<T>[];
-  parent?: TreeNode<T>;
+  key: IndexType
+  children: (T & TreeNode<T>)[]
+  parent?: T & TreeNode<T>
 }
 
 // to extract path from parent or child
 export interface Supplier<T, S> {
-  (parent: T): S;
+  (parent: T): S
 }
 
-export const common = <T>(
+export const objectListToTree = <T>(
   list: T[],
   keyExtractor: Supplier<T, IndexType>,
   parentKeyExtractor: Supplier<T, IndexType | undefined>
-): TreeNode<T>[] => {
+): (T & TreeNode<T>)[] => {
   if (list.length === 0) {
-    return [];
+    return []
   }
 
   // create a map of paths to tree nodes for each element
-  const parentMap: Record<IndexType, TreeNode<T>> = {};
-  list.forEach((node) => {
-    const key = keyExtractor(node);
+  const parentMap: Record<IndexType, T & TreeNode<T>> = {}
+  list.forEach(node => {
+    const key = keyExtractor(node)
     parentMap[key] = {
-      node,
+      ...node,
       key,
-      children: [],
-    };
-  });
+      children: []
+    }
+  })
 
-  const rootNodes: TreeNode<T>[] = [];
-  const treeNodes = Object.entries(parentMap);
+  const rootNodes: (T & TreeNode<T>)[] = []
+  const treeNodes = Object.entries(parentMap)
   // add children to their parents
   treeNodes.forEach(([_, child]) => {
-    const parentKey = parentKeyExtractor(child.node);
+    const parentKey = parentKeyExtractor(child)
     const parent =
       parentKey !== undefined && parentKey in parentMap
         ? parentMap[parentKey]
-        : undefined;
+        : undefined
 
     if (parent !== undefined && parent !== child) {
       // there is a parent node for this item
-      parent.children.push(child);
-      child.parent = parent;
+      parent.children.push(child)
+      child.parent = parent
     } else {
       // is a root node (or orphan)
-      rootNodes.push(child);
+      rootNodes.push(child)
     }
-  });
+  })
 
-  return rootNodes;
-};
+  return rootNodes
+}
 
 /**
  * Convert a list to using properties from each element
@@ -75,20 +74,20 @@ export const listToTreeByProperty = <
   keyProperty: S,
   parentKeyProperty: Q
 ) =>
-  common(
+  objectListToTree(
     list,
     (item: T) => item[keyProperty],
     (item: T) => item[parentKeyProperty]
-  );
+  )
 
-export type TreeSortFunction<T> = (a: TreeNode<T>, b: TreeNode<T>) => number;
+export type TreeSortFunction<T> = (a: TreeNode<T>, b: TreeNode<T>) => number
 
 /**
  * Default tree sorting function that compares TreeNodes by key alphabetically
  */
 export const treeKeySorter = <T>(a: TreeNode<T>, b: TreeNode<T>) => {
-  return a.key.toString().localeCompare(b.key.toString());
-};
+  return a.key.toString().localeCompare(b.key.toString())
+}
 
 /**
  * Sort a tree and its children recursively.
@@ -98,19 +97,19 @@ export const treeKeySorter = <T>(a: TreeNode<T>, b: TreeNode<T>) => {
  * @param sortFunction Optional custom function
  */
 export const sortTree = <T>(
-  nodes: Array<TreeNode<T>>,
+  nodes: Array<T & TreeNode<T>>,
   sortFunction: TreeSortFunction<T> = treeKeySorter
-): Array<TreeNode<T>> => {
+): Array<T & TreeNode<T>> => {
   return nodes
-    .map((node) => {
+    .map(node => {
       if (!node.children) {
-        return node;
+        return node
       } else {
         return {
           ...node,
-          children: sortTree(node.children, sortFunction),
-        };
+          children: sortTree(node.children, sortFunction)
+        }
       }
     })
-    .sort(sortFunction);
-};
+    .sort(sortFunction)
+}

@@ -3,6 +3,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  position: relative;
 
   .ant-tree {
     flex-grow: 1;
@@ -23,5 +24,17 @@
       background-color: transparent;
       color: white;
     }
+  }
+}
+
+.breeze-file-tree-trigger {
+  height: 100%;
+}
+
+.breeze-file-dropdown {
+  .ant-menu-item {
+    height: 20px;
+    line-height: 20px;
+    padding: 0 10px;
   }
 }

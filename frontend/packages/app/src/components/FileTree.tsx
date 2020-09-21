@@ -1,4 +1,4 @@
-import { Tree, Button, Input } from 'antd'
+import { Tree, Button, Input, Menu, Dropdown } from 'antd'
 import React, {
   KeyboardEventHandler,
   useCallback,
@@ -7,39 +7,20 @@ import React, {
   useState
 } from 'react'
 import './FileTree.less'
-import {
-  listToTreeByPath,
-  sortTree,
-  TreeNode as TreeNodeModel
-} from '@codefreak/tree-utils'
-import { Directory, File } from '../generated/graphql'
+import { listToTreeByPath, sortTree } from '@codefreak/tree-utils'
 import { basename } from 'path'
 import {
   FileOutlined,
   FolderOutlined,
   FileAddOutlined,
-  FolderAddOutlined
+  FolderAddOutlined,
+  EditOutlined,
+  DeleteOutlined
 } from '@ant-design/icons'
 import useFiles from '../hooks/useFiles'
 import { TreeProps } from 'antd/lib/tree'
 import { CheckOutlined, LoadingOutlined } from '@ant-design/icons/lib'
-import LoadingIndicator from "./LoadingIndicator";
-
-const { TreeNode } = Tree
-
-type Fileish = File | Directory
-const renderTreeRecursive = (nodes: TreeNodeModel<Fileish>[]) => {
-  return nodes.map(node => {
-    const filename = basename(node.node.path) || '/'
-    const isFile = node.node.__typename === 'File'
-    const icon = isFile ? <FileOutlined /> : <FolderOutlined />
-    return (
-      <TreeNode key={node.key} icon={icon} title={filename} isLeaf={isFile}>
-        {node.children.length > 0 ? renderTreeRecursive(node.children) : null}
-      </TreeNode>
-    )
-  })
-}
+import LoadingIndicator from './LoadingIndicator'
 
 export enum NodeType {
   FILE = 'file',
@@ -142,23 +123,71 @@ export interface FileTreeProps extends TreeProps {
 
 const FileTree: React.FC<FileTreeProps> = ({ onCreate, ...treeProps }) => {
   const { loading, data } = useFiles()
+  const [rightClicked, setRightClicked] = useState<
+    | {
+        isFile: boolean
+        path: string
+      }
+    | undefined
+  >(undefined)
+
+  const rightMenu = (
+    <Menu className="breeze-file-dropdown">
+      <Menu.Item icon={<EditOutlined />}>
+        Rename {rightClicked?.isFile ? 'File' : 'Directory'}
+      </Menu.Item>
+      <Menu.Item
+        icon={<DeleteOutlined />}
+        style={{
+          color: 'red'
+        }}
+      >
+        Delete {rightClicked?.isFile ? 'File' : 'Directory'}
+      </Menu.Item>
+      <Menu.Item icon={<FileAddOutlined />}>New file</Menu.Item>
+      <Menu.Item icon={<FolderAddOutlined />}>New directory</Menu.Item>
+    </Menu>
+  )
 
   if (loading || data === undefined) {
     return <LoadingIndicator />
   }
 
-  const tree = sortTree(listToTreeByPath(data.files, 'path'))
+  const treeData = sortTree(
+    listToTreeByPath(
+      data.files.map(e => ({
+        ...e,
+        isLeaf: e.__typename === 'File',
+        title: basename(e.path),
+        icon: e.__typename === 'File' ? <FileOutlined /> : <FolderOutlined />
+      })),
+      'path'
+    )
+  )
+  const rootTreeNode = treeData[0].key === '/' ? treeData[0].children : treeData
+
+  const onItemRightClick: TreeProps['onRightClick'] = ({ node, event }) => {
+    setRightClicked({
+      isFile: node.isLeaf === true,
+      path: node.key.toString()
+    })
+  }
+
   return (
     <div className="breeze-file-tree">
-      <Tree
-        defaultExpandedKeys={['/']}
-        blockNode
-        showIcon={true}
-        className=""
-        {...treeProps}
-      >
-        {renderTreeRecursive(tree[0].children)}
-      </Tree>
+      <Dropdown overlay={rightMenu} trigger={['contextMenu']}>
+        <div className="breeze-file-tree-trigger">
+          <Tree
+            draggable={true}
+            onRightClick={onItemRightClick}
+            defaultExpandedKeys={['/']}
+            blockNode
+            showIcon={true}
+            treeData={rootTreeNode}
+            {...treeProps}
+          />
+        </div>
+      </Dropdown>
       <FileTreeAdder onCreate={onCreate} />
     </div>
   )

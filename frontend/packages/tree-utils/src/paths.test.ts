@@ -1,109 +1,111 @@
-import { fillMissingPaths, listToTreeByPath } from "./paths";
-import {TreeNode} from "./common";
+import { fillMissingPaths, listToTreeByPath } from './paths'
+import { TreeNode } from './common'
 
 interface PathItem {
-  path: string;
+  path: string
 }
 
+type PathTreeItem = PathItem & TreeNode<PathItem>
+
 const TEST_PATH_LIST: PathItem[] = [
-  { path: "/" },
-  { path: "/a" },
-  { path: "/a/a" },
-  { path: "/a/b" },
-  { path: "/a/b/a" },
-  { path: "/b" },
-  { path: "/b/a" },
-];
+  { path: '/' },
+  { path: '/a' },
+  { path: '/a/a' },
+  { path: '/a/b' },
+  { path: '/a/b/a' },
+  { path: '/b' },
+  { path: '/b/a' }
+]
 
-describe("listToTreeByPath", () => {
-  it("creates tree by using parent path", () => {
-    const root: TreeNode<PathItem> = {
-      key: "/",
-      node: TEST_PATH_LIST[0],
+describe('listToTreeByPath', () => {
+  it('creates tree by using parent path', () => {
+    const root: PathTreeItem = {
+      ...TEST_PATH_LIST[0],
+      key: '/',
+      children: []
+    }
+    const a: PathTreeItem = {
+      ...TEST_PATH_LIST[1],
+      key: '/a',
       children: [],
-    };
-    const a: TreeNode<PathItem> = {
-      key: "/a",
-      node: TEST_PATH_LIST[1],
+      parent: root
+    }
+    root.children.push(a)
+    const aa: PathTreeItem = {
+      ...TEST_PATH_LIST[2],
+      key: '/a/a',
       children: [],
-      parent: root,
-    };
-    root.children.push(a);
-    const aa: TreeNode<PathItem> = {
-      key: "/a/a",
-      node: TEST_PATH_LIST[2],
+      parent: a
+    }
+    a.children.push(aa)
+    const ab: PathTreeItem = {
+      ...TEST_PATH_LIST[3],
+      key: '/a/b',
       children: [],
-      parent: a,
-    };
-    a.children.push(aa);
-    const ab: TreeNode<PathItem> = {
-      key: "/a/b",
-      node: TEST_PATH_LIST[3],
+      parent: a
+    }
+    a.children.push(ab)
+    const aba: PathTreeItem = {
+      ...TEST_PATH_LIST[4],
+      key: '/a/b/a',
       children: [],
-      parent: a,
-    };
-    a.children.push(ab);
-    const aba: TreeNode<PathItem> = {
-      key: "/a/b/a",
-      node: TEST_PATH_LIST[4],
+      parent: ab
+    }
+    ab.children.push(aba)
+    const b: PathTreeItem = {
+      ...TEST_PATH_LIST[5],
+      key: '/b',
       children: [],
-      parent: ab,
-    };
-    ab.children.push(aba);
-    const b: TreeNode<PathItem> = {
-      key: "/b",
-      node: TEST_PATH_LIST[5],
+      parent: root
+    }
+    root.children.push(b)
+    const ba: PathTreeItem = {
+      ...TEST_PATH_LIST[6],
+      key: '/b/a',
       children: [],
-      parent: root,
-    };
-    root.children.push(b);
-    const ba: TreeNode<PathItem> = {
-      key: "/b/a",
-      node: TEST_PATH_LIST[6],
-      children: [],
-      parent: b,
-    };
-    b.children.push(ba);
-    expect(listToTreeByPath(TEST_PATH_LIST, "path")).toEqual([root]);
-  });
-});
+      parent: b
+    }
+    b.children.push(ba)
+    expect(listToTreeByPath(TEST_PATH_LIST, 'path')).toEqual([root])
+  })
+})
 
-describe("fillMissingPaths", () => {
-  it("adds missing paths", () => {
+describe('fillMissingPaths', () => {
+  it('adds missing paths', () => {
     expect(
       fillMissingPaths(
         [
           {
-            path: "/a/b/c",
+            path: '/a/b/c'
           },
           {
-            path: "/b/c/c",
-          },
+            path: '/b/c/c'
+          }
         ],
-        "path"
+        'path'
       )
     ).toEqual([
       {
-        path: "/a/b/c",
+        path: '/a/b/c'
       },
       {
-        path: "/b/c/c",
+        path: '/b/c/c'
       },
       {
-        path: "/a/b",
+        path: '/a/b'
       },
       {
-        path: "/a",
+        path: '/a'
       },
       {
-        path: "/",
+        path: '/'
       },
       {
-        path: "/b/c",
+        path: '/b/c'
       },
       {
-        path: "/b",
-      },
-    ]);
-  });
-});
+        path: '/b'
+      }
+    ])
+  })
+})
