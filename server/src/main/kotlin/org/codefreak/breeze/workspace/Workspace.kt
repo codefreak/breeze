@@ -5,6 +5,7 @@ import io.vertx.core.Promise
 import io.vertx.core.Vertx
 import org.codefreak.breeze.io.CachedTeeInputStream
 import org.codefreak.breeze.shell.Process
+import org.codefreak.breeze.util.shortHex
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
 import java.util.UUID
@@ -32,6 +33,12 @@ abstract class Workspace(
     }
 
     private val processMap: MutableMap<UUID, Pair<Process?, CachedTeeInputStream>> = mutableMapOf()
+
+    /**
+     * Track the number of starts because a workspace can be restarted  meaning the status RUNNING, STOPPING,
+     * RESTARTING, STOPPED are ambiguous and need a cycle count.
+     */
+    private var startCount = 0
 
     private var mainProcess: Process?
         get() = processMap[MAIN_PROCESS_ID]?.first
@@ -84,6 +91,7 @@ abstract class Workspace(
         if (status > WorkspaceStatus.STOPPED) {
             return Future.failedFuture(RuntimeException("Cannot restart a removed environment"))
         }
+        val startId = ++startCount
         val promise = Promise.promise<Process>()
         startupPromise = promise
         status = when {
@@ -98,7 +106,8 @@ abstract class Workspace(
             // TODO: this looks ugly and creates a stray thread
             thread(name = "breeze-workspace-watch-main") {
                 it.join()
-                if (status < WorkspaceStatus.STOPPING) {
+                // make sure the workspace has not been started again already
+                if (startCount == startId && status < WorkspaceStatus.STOPPING) {
                     log.debug("Main process was stopped from outside. Stopping workspace...")
                     stop()
                 }
@@ -186,15 +195,15 @@ abstract class Workspace(
             process.start()
             // remove process from map if it exits
             // TODO: this looks ugly and creates a stray thread
-            /*thread(name = "breeze-workspace-wait-${id.shortHex}") {
+            thread(name = "breeze-workspace-wait-${id.shortHex}") {
                 val exitCode = process.join()
                 log.info("Process $id finished with $exitCode. Removing from process map")
                 processMap.remove(id)?.also { (process, stdout) ->
                     // close io streams properly
-                    //process?.stdin?.close()
-                    //stdout.close()
+                    process?.stdin?.close()
+                    stdout.close()
                 }
-            }*/
+            }
             Future.succeededFuture(id)
         }
     }

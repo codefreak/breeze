@@ -48,7 +48,7 @@ class DockerExecProcess(
             finishedLatch.countDown()
             return join()
         } else {
-            -1
+            exitCode ?: -1
         }
     }
 

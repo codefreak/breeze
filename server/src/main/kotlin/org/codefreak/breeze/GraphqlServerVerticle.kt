@@ -34,7 +34,7 @@ class GraphqlServerVerticle
         private val log = LoggerFactory.getLogger(GraphqlServerVerticle::class.java)
     }
 
-    override fun start() {
+    override fun start(startFuture: Future<Void>) {
         vertx.eventBus().registerDefaultCodec(FilesystemEvent::class.java, FilesystemEventCodec())
 
         config.containerId.let {
@@ -45,8 +45,32 @@ class GraphqlServerVerticle
             }
         }
 
+        // TODO: We should start the webserver first and publish workspace startup progress
+        startWorkspace().compose {
+            startGraphqlServer()
+        }.onComplete {
+            startFuture.complete()
+        }
+    }
+
+    override fun stop(stopFuture: Future<Void>) {
+        log.info("Received shutdown, stopping server…")
+        log.info("Stopping file watcher…")
+        filesystemWatcher.stop()
+        log.info("Stopping workspace…")
+        workspace.stop().onSuccess {
+            log.info("removing workspace…")
+            workspace.remove().onComplete {
+                log.info("Done.")
+                stopFuture.complete()
+            }
+        }
+    }
+
+    private fun startWorkspace(): Future<Unit> {
         log.info("Initializing workspace")
-        workspace.create(config.workspaceReplCmd, config.defaultEnv).compose {
+
+        return workspace.create(config.workspaceReplCmd, config.defaultEnv).compose {
             log.info("Starting workspace")
             workspace.start()
         }.compose {
@@ -68,13 +92,21 @@ class GraphqlServerVerticle
                 log.warn("Provisioning failed: $output")
             }
             Future.succeededFuture(process)
+        }.compose {
+            log.info("Restarting workspace after provisioning...")
+            workspace.restart()
+        }.onComplete {
+            log.info("Initializing default file ${config.mainFile}")
+            filesService.writeFile(workspace.path.resolve(config.mainFile), config.mainFileContent)
+            filesystemWatcher.watch()
         }.onFailure { t ->
             log.error("Provisioning failed: " + t.message)
+        }.compose {
+            Future.succeededFuture<Unit>()
         }
+    }
 
-        log.info("Initializing default file ${config.mainFile}")
-        filesService.writeFile(workspace.path.resolve(config.mainFile), config.mainFileContent)
-
+    private fun startGraphqlServer(): Future<Unit> {
         val router: Router = Router.router(vertx)
         router.route().handler(CorsHandler.create("*").allowedMethods(setOf(HttpMethod.GET)))
         // Handle static resources from React in production builds
@@ -84,24 +116,9 @@ class GraphqlServerVerticle
         }))
         router.route("/graphql").handler(GraphQLHandler.create(graphQL))
 
-        filesystemWatcher.watch()
-
         vertx.createHttpServer()
                 .requestHandler(router::handle)
                 .listen(8080)
-    }
-
-    override fun stop(stopFuture: Future<Void>) {
-        log.info("Received shutdown, stopping server…")
-        log.info("Stopping file watcher…")
-        filesystemWatcher.stop()
-        log.info("Stopping workspace…")
-        workspace.stop().onSuccess {
-            log.info("removing workspace…")
-            workspace.remove().onComplete {
-                log.info("Done.")
-                stopFuture.complete()
-            }
-        }
+        return Future.succeededFuture()
     }
 }
