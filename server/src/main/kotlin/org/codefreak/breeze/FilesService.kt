@@ -1,10 +1,7 @@
-package org.codefreak.breeze.graphql
+package org.codefreak.breeze
 
-import com.google.inject.Inject
-import com.google.inject.Singleton
 import org.codefreak.breeze.graphql.model.Directory
 import org.codefreak.breeze.graphql.model.FileSystemNode
-import org.codefreak.breeze.workspace.Workspace
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.file.Path
@@ -13,12 +10,7 @@ import java.time.OffsetDateTime
 import java.time.ZoneId
 import org.codefreak.breeze.graphql.model.File as FileAPIObject
 
-@Singleton
-class FilesService
-@Inject constructor(
-        workspace: Workspace
-) {
-    val rootPath = workspace.path
+class FilesService(val rootPath: Path) {
 
     companion object {
         private val log = LoggerFactory.getLogger(FilesService::class.java)

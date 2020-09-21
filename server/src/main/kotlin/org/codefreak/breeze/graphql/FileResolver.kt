@@ -8,6 +8,7 @@ import graphql.kickstart.tools.GraphQLSubscriptionResolver
 import io.reactivex.BackpressureStrategy
 import io.reactivex.Flowable
 import io.vertx.core.Vertx
+import org.codefreak.breeze.FilesService
 import org.codefreak.breeze.graphql.model.Directory
 import org.codefreak.breeze.graphql.model.File
 import org.codefreak.breeze.graphql.model.FileSystemEventType

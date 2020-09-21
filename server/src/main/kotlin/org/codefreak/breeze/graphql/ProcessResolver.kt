@@ -71,7 +71,7 @@ class ProcessResolver
 
     fun processOutput(id: UUID): Publisher<String> {
         log.info("Subscribing for data of shell $id")
-        val stdout = workspace.stdout(id) ?: throw IllegalArgumentException("There is no process $id")
+        val stdout = workspace.stdout(id)
         return Flowable.create({ emitter ->
             val stdoutThread = thread(name = "breeze-stdout-stream-${id.shortHex}") {
                 Strings.from(BufferedReader(InputStreamReader(stdout)))

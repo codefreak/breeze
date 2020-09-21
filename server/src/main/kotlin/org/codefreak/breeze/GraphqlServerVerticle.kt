@@ -12,7 +12,6 @@ import io.vertx.ext.web.handler.StaticHandler
 import io.vertx.ext.web.handler.graphql.ApolloWSHandler
 import io.vertx.ext.web.handler.graphql.ApolloWSOptions
 import io.vertx.ext.web.handler.graphql.GraphQLHandler
-import org.codefreak.breeze.graphql.FilesService
 import org.codefreak.breeze.util.async
 import org.codefreak.breeze.vertx.FilesystemEvent
 import org.codefreak.breeze.vertx.FilesystemEventCodec
@@ -49,6 +48,7 @@ class GraphqlServerVerticle
         startWorkspace().compose {
             startGraphqlServer()
         }.onComplete {
+            @Suppress("DEPRECATION")
             startFuture.complete()
         }
     }
@@ -62,6 +62,7 @@ class GraphqlServerVerticle
             log.info("removing workspace…")
             workspace.remove().onComplete {
                 log.info("Done.")
+                @Suppress("DEPRECATION")
                 stopFuture.complete()
             }
         }
@@ -97,7 +98,7 @@ class GraphqlServerVerticle
             workspace.restart()
         }.onComplete {
             log.info("Initializing default file ${config.mainFile}")
-            filesService.writeFile(workspace.path.resolve(config.mainFile), config.mainFileContent)
+            filesService.writeFile(workspace.localPath.resolve(config.mainFile), config.mainFileContent)
             filesystemWatcher.watch()
         }.onFailure { t ->
             log.error("Provisioning failed: " + t.message)

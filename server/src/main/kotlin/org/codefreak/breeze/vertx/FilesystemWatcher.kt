@@ -29,7 +29,7 @@ class FilesystemWatcher
     }
 
     private var pollRate = 100L
-    private val root = workspace.path
+    private val root = workspace.localPath
     private var watchTimerId: Long? = null
     private val watchService = FileSystems.getDefault().newWatchService()
     private val eventBus = vertx.eventBus()

@@ -36,10 +36,10 @@ class LocalWorkspace(
         this.env = env
 
         val promise = Promise.promise<Unit>()
-        if (vertx.fileSystem().existsBlocking(path.toString())) {
+        if (vertx.fileSystem().existsBlocking(localPath.toString())) {
             promise.complete()
         } else {
-            vertx.fileSystem().mkdirs(path.toString()) {
+            vertx.fileSystem().mkdirs(localPath.toString()) {
                 if (it.succeeded()) {
                     promise.complete()
                 } else {
@@ -78,7 +78,7 @@ class LocalWorkspace(
 
     override fun doRemove(): Future<Unit> {
         val promise = Promise.promise<Unit>()
-        vertx.fileSystem().deleteRecursive(path.toString(), true) {
+        vertx.fileSystem().deleteRecursive(localPath.toString(), true) {
             if (it.succeeded()) {
                 promise.complete()
             } else {
@@ -97,7 +97,7 @@ class LocalWorkspace(
         val ptyProcess = PtyProcessBuilder()
                 .setCommand(cmd)
                 .setEnvironment(env)
-                .setDirectory(path.toString())
+                .setDirectory(localPath.toString())
                 .start()
         return LocalProcess(ptyProcess)
     }

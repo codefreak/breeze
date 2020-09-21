@@ -18,7 +18,7 @@ import kotlin.properties.Delegates
  */
 abstract class Workspace(
         protected val vertx: Vertx,
-        val path: Path,
+        val localPath: Path,
         private val remove: Boolean
 ) {
     companion object {

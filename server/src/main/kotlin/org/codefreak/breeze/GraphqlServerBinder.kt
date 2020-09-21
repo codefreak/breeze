@@ -12,11 +12,11 @@ import com.google.inject.TypeLiteral
 import com.google.inject.multibindings.Multibinder
 import graphql.GraphQL
 import graphql.kickstart.tools.GraphQLResolver
+import org.codefreak.breeze.docker.DockerWorkspace
 import org.codefreak.breeze.graphql.ConfigResolver
 import org.codefreak.breeze.graphql.FileResolver
 import org.codefreak.breeze.graphql.GraphQLFactory
 import org.codefreak.breeze.graphql.ProcessResolver
-import org.codefreak.breeze.docker.DockerWorkspace
 import org.codefreak.breeze.workspace.Workspace
 import java.net.URI
 
@@ -38,6 +38,12 @@ class GraphqlServerBinder : AbstractModule() {
     @JvmSuppressWildcards
     fun graphQL(queryResolvers: Set<GraphQLResolver<*>>): GraphQL {
         return GraphQLFactory(queryResolvers.toList()).graphQL()
+    }
+
+    @Provides
+    @Singleton
+    fun fileService(workspace: Workspace): FilesService {
+        return FilesService(workspace.localPath)
     }
 
     override fun configure() {

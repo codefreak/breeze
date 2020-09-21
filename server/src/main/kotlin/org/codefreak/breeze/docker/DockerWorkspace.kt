@@ -29,7 +29,7 @@ class DockerWorkspace
         private val docker: DockerClient
 ) : Workspace(
         vertx,
-        path = if (getSurroundingContainerId() == null) workspacePath(config.instanceId) else Paths.get(config.workspaceCodePath),
+        localPath = if (getSurroundingContainerId() == null) workspacePath(config.instanceId) else Paths.get(config.workspaceCodePath),
         remove = true
 ) {
     companion object {
@@ -46,7 +46,7 @@ class DockerWorkspace
 
         val promise = Promise.promise<Unit>()
         // create workspace directory
-        vertx.fileSystem().mkdirs(path.toString()) {
+        vertx.fileSystem().mkdirs(localPath.toString()) {
             if (it.succeeded()) {
                 promise.complete()
             } else {
@@ -183,7 +183,7 @@ class DockerWorkspace
         val ownContainerId = config.containerId
         if (ownContainerId == null) {
             // create simple bind-mount of the tmp dir in case we are running Breeze outside of a container
-            return path.toString()
+            return localPath.toString()
         } else {
             // mount code volume containing all files from this container to the workspace
             val containerInfo = docker.inspectContainerCmd(ownContainerId).exec()
