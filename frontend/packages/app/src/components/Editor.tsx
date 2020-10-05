@@ -15,7 +15,6 @@ import {
 import withConfig, { WithConfigProps } from '../util/withConfig'
 
 import './Editor.less'
-import { assertWrappingType } from 'graphql'
 
 interface EditorProps extends WithConfigProps {
   defaultFile?: string
@@ -89,7 +88,6 @@ const Editor: React.FC<EditorProps> = ({ config: { mainFile } }) => {
   }
 
   const onDeleteFile: FileTreeProps['onDelete'] = async (_, path) => {
-    console.log(path)
     await deleteFile({
       variables: {
         path
@@ -106,6 +104,14 @@ const Editor: React.FC<EditorProps> = ({ config: { mainFile } }) => {
             onCreate={onCreateFile}
             onRename={onFileRename}
             onDelete={onDeleteFile}
+            onMove={async (node, target) => {
+              await moveFile({
+                variables: {
+                  oldPath: node,
+                  newPath: join(target, basename(node))
+                }
+              })
+            }}
           />
         </BreezeComponent>
       </Col>

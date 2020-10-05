@@ -47,7 +47,6 @@ type Mutation {
     createDirectory(path: String!): Directory!
     unlink(path: String!): Boolean!
     renameFile(source: String!, target: String!): FileSystemNode!
-    #copy(soruce: String!, target: String!): FileSystemNode!
 
     createProcess(type: ProcessType): ID!
     killProcess(id: ID!): Int

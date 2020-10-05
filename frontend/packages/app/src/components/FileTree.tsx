@@ -48,10 +48,18 @@ export interface FileTreeProps extends TreeProps {
   onRename?: (oldName: string, newName: string) => Promise<void>
   onFileClick?: (type: NodeType, name: string) => Promise<void>
   onDelete?: (type: NodeType, path: string) => Promise<void>
+  onMove?: (path: string, target: string) => Promise<void>
 }
 
 const FileTree: React.FC<FileTreeProps> = props => {
-  const { onCreate, onRename, onFileClick, onDelete, ...treeProps } = props
+  const {
+    onCreate,
+    onRename,
+    onFileClick,
+    onDelete,
+    onMove,
+    ...treeProps
+  } = props
   const { loading, data } = useFiles()
   const [rightClicked, setRightClicked] = useState<
     | {
@@ -255,6 +263,22 @@ const FileTree: React.FC<FileTreeProps> = props => {
                 treeNode.isLeaf ? NodeType.FILE : NodeType.DIRECTORY,
                 path.replace(/^\/+/, '')
               )
+            }}
+            onDrop={async ({ dragNode, node, dropToGap }) => {
+              if (!onMove) {
+                return
+              }
+              if (!dropToGap && !node.isLeaf) {
+                return
+              }
+              const path = dragNode.key.toString()
+              const target = dropToGap
+                ? dirname(node.key.toString())
+                : node.key.toString()
+              if (path === target) {
+                return
+              }
+              await onMove(path, target)
             }}
             {...treeProps}
           />
