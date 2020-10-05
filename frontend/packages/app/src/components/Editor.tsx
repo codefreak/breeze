@@ -8,7 +8,8 @@ import { insertAfter, remove } from '../util/array'
 import { TabsProps } from 'antd/es/tabs'
 import {
   useCreateDirectoryMutation,
-  useCreateFileMutation
+  useCreateFileMutation,
+  useMoveFileMutation
 } from '../generated/graphql'
 import withConfig, { WithConfigProps } from '../util/withConfig'
 
@@ -26,6 +27,7 @@ const Editor: React.FC<EditorProps> = ({ config: { mainFile } }) => {
   const [selectedPath, setSelectedPath] = useState<string>('/')
   const [createFile] = useCreateFileMutation()
   const [createDirectory] = useCreateDirectoryMutation()
+  const [moveFile] = useMoveFileMutation()
 
   const onEditTab: TabsProps['onEdit'] = useCallback(
     (targetKey, action) => {
@@ -46,15 +48,9 @@ const Editor: React.FC<EditorProps> = ({ config: { mainFile } }) => {
     [fileStack, setFileStack, currentFile, setCurrentFile]
   )
 
-  const onClick: FileTreeProps['onClick'] = useCallback(
-    (_, node) => {
-      if (!node) {
-        setSelectedPath('/')
-        return
-      }
-      const path = node.key.toString().replace(/^[\\/.]+/, '')
-      console.log(path)
-      if (!node.isLeaf) {
+  const onFileClick: FileTreeProps['onFileClick'] = useCallback(
+    async (nodeType, path) => {
+      if (nodeType === NodeType.DIRECTORY) {
         setSelectedPath(path)
         return
       }
@@ -83,11 +79,21 @@ const Editor: React.FC<EditorProps> = ({ config: { mainFile } }) => {
     [selectedPath, createFile, createDirectory]
   )
 
+  const onFileRename: FileTreeProps['onRename'] = async (oldPath, newPath) => {
+    await moveFile({
+      variables: { oldPath, newPath }
+    })
+  }
+
   return (
     <Row style={{ height: '100%' }}>
       <Col span={7}>
         <BreezeComponent title="Files">
-          <FileTree onClick={onClick} onCreate={onCreateFile} />
+          <FileTree
+            onFileClick={onFileClick}
+            onCreate={onCreateFile}
+            onRename={onFileRename}
+          />
         </BreezeComponent>
       </Col>
       <Col span={17}>

@@ -88,4 +88,14 @@ class FilesService(val rootPath: Path) {
     fun relPath(path: Path): String {
         return rootPath.relativize(path).toString()
     }
+
+    fun rename(oldPath: Path, newPath: Path): File {
+        val file = pathToFile(oldPath)
+        val newFile = pathToFile(newPath)
+        if(!file.exists()) {
+            throw IllegalArgumentException("File ${oldPath.fileName} does not exist")
+        }
+        file.renameTo(newFile)
+        return newFile
+    }
 }

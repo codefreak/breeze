@@ -68,6 +68,12 @@ class FileResolver
         ) as Directory
     }
 
+    fun renameFile(oldPath: String, newPath: String): FileSystemNode {
+        return filesService.fileToApiObject(
+                filesService.rename(Paths.get(oldPath), Paths.get(newPath))
+        ) ?: throw RuntimeException("Could not rename file")
+    }
+
     fun fileChange(): Publisher<FilesystemEventModel> {
         log.info("Listening on file changes")
         return Flowable.create<FilesystemEventModel>({ emitter ->

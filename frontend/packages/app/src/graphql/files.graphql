@@ -35,6 +35,12 @@ mutation CreateDirectory($path: String!) {
   }
 }
 
+mutation MoveFile($oldPath: String!, $newPath: String!) {
+  renameFile(source: $oldPath, target: $newPath) {
+    path
+  }
+}
+
 subscription FileChanged {
   fileChange {
     path

@@ -23,11 +23,11 @@ export enum NodeType {
 
 interface TreeAddInputProps extends InputProps {
   onCancel?: () => void
-  onCreate?: (name: string) => Promise<void>
+  onConfirm?: (name: string) => Promise<void>
 }
 
-const TreeAddInput: React.FC<TreeAddInputProps> = props => {
-  const { onCreate, onCancel, ...inputProps } = props
+const TreeInput: React.FC<TreeAddInputProps> = props => {
+  const { onConfirm, onCancel, ...inputProps } = props
 
   const onKeyPress: KeyboardEventHandler<HTMLInputElement> = e => {
     if (e.keyCode === 27) {
@@ -35,18 +35,21 @@ const TreeAddInput: React.FC<TreeAddInputProps> = props => {
       onCancel && onCancel()
     } else if (e.keyCode === 13) {
       // Enter
-      onCreate && onCreate(e.currentTarget.value)
+      onConfirm && onConfirm(e.currentTarget.value)
     }
   }
 
-  return <Input {...inputProps} onKeyDown={onKeyPress} />
+  return <Input size="small" autoFocus {...inputProps} onKeyDown={onKeyPress} />
 }
 
 export interface FileTreeProps extends TreeProps {
   onCreate?: (type: NodeType, name: string) => Promise<void>
+  onRename?: (oldName: string, newName: string) => Promise<void>
+  onFileClick?: (type: NodeType, name: string) => Promise<void>
 }
 
-const FileTree: React.FC<FileTreeProps> = ({ onCreate, ...treeProps }) => {
+const FileTree: React.FC<FileTreeProps> = props => {
+  const { onCreate, onRename, onFileClick, ...treeProps } = props
   const { loading, data } = useFiles()
   const [rightClicked, setRightClicked] = useState<
     | {
@@ -62,8 +65,10 @@ const FileTree: React.FC<FileTreeProps> = ({ onCreate, ...treeProps }) => {
       }
     | undefined
   >()
+  const [renaming, setRenaming] = useState<string | undefined>()
   const [expandedKeys, setExpandedKeys] = useState<string[]>([])
 
+  // expand subtree if we are creating a file/dir in it
   useEffect(() => {
     if (adding && expandedKeys.indexOf(adding.parent) === -1) {
       setExpandedKeys([adding.parent, ...expandedKeys])
@@ -79,12 +84,19 @@ const FileTree: React.FC<FileTreeProps> = ({ onCreate, ...treeProps }) => {
       // if you add something on a file add a sibling
       parentDir = rightClicked?.path ? dirname(rightClicked.path) : '/'
     }
+    setRenaming(undefined)
     setAdding({ parent: parentDir, type })
   }
 
   const rightMenu = (
     <Menu className="breeze-file-dropdown">
-      <Menu.Item icon={<EditOutlined />}>
+      <Menu.Item
+        icon={<EditOutlined />}
+        onClick={() => {
+          setAdding(undefined)
+          setRenaming(rightClicked?.path?.replace(/^\/+/, ''))
+        }}
+      >
         Rename {rightClicked?.isFile ? 'File' : 'Directory'}
       </Menu.Item>
       <Menu.Item
@@ -113,13 +125,34 @@ const FileTree: React.FC<FileTreeProps> = ({ onCreate, ...treeProps }) => {
 
   const treeData = sortTree(
     listToTreeByPath(
-      data.files.map(e => ({
-        path: e.path,
-        isLeaf: e.__typename === 'File',
-        title: basename(e.path),
-        icon: e.__typename === 'File' ? <FileOutlined /> : <FolderOutlined />,
-        disabled: adding !== undefined
-      })),
+      data.files.map(e => {
+        let title: React.ReactElement | string = basename(e.path)
+        const isRenameTarget = renaming === e.path
+        if (renaming && isRenameTarget) {
+          title = (
+            <TreeInput
+              defaultValue={basename(renaming)}
+              onConfirm={async (newName: string) => {
+                if (onRename) {
+                  await onRename(renaming, newName)
+                }
+                setRenaming(undefined)
+              }}
+              onCancel={() => {
+                setRenaming(undefined)
+              }}
+            />
+          )
+        }
+        return {
+          path: e.path,
+          isLeaf: e.__typename === 'File',
+          title,
+          icon: e.__typename === 'File' ? <FileOutlined /> : <FolderOutlined />,
+          disabled:
+            !isRenameTarget && (adding !== undefined || renaming !== undefined)
+        }
+      }),
       'path'
     )
   )
@@ -129,7 +162,7 @@ const FileTree: React.FC<FileTreeProps> = ({ onCreate, ...treeProps }) => {
   if (adding !== undefined) {
     // insert adding node at right position
     const addTreeNode = {
-      key: '__',
+      key: '\0',
       icon:
         adding.type === NodeType.FILE ? (
           <FileAddOutlined />
@@ -137,11 +170,9 @@ const FileTree: React.FC<FileTreeProps> = ({ onCreate, ...treeProps }) => {
           <FolderAddOutlined />
         ),
       title: (
-        <TreeAddInput
-          size="small"
-          autoFocus
+        <TreeInput
           onCancel={() => setAdding(undefined)}
-          onCreate={async name => {
+          onConfirm={async name => {
             const path = join(adding.parent, name)
             onCreate && (await onCreate(adding.type, path))
             setAdding(undefined)
@@ -161,10 +192,14 @@ const FileTree: React.FC<FileTreeProps> = ({ onCreate, ...treeProps }) => {
     }
   }
 
-  const onItemRightClick: TreeProps['onRightClick'] = ({ node, event }) => {
+  const onItemRightClick: TreeProps['onRightClick'] = ({ node }) => {
+    const path = node.key.toString()
+    if (path.indexOf('\0') !== -1) {
+      return
+    }
     setRightClicked({
       isFile: node.isLeaf === true,
-      path: node.key.toString()
+      path
     })
   }
 
@@ -177,13 +212,21 @@ const FileTree: React.FC<FileTreeProps> = ({ onCreate, ...treeProps }) => {
             onRightClick={onItemRightClick}
             blockNode
             expandedKeys={expandedKeys}
-            onExpand={(newExpandedKeys, info) => {
-              console.log(newExpandedKeys)
-              console.log(info)
+            onExpand={newExpandedKeys => {
               setExpandedKeys([...newExpandedKeys.map(e => e.toString())])
             }}
             showIcon={true}
             treeData={rootTreeNodes}
+            onClick={async (e, treeNode) => {
+              const path = treeNode.key.toString()
+              if (path === '\0' || !onFileClick) {
+                return
+              }
+              await onFileClick(
+                treeNode.isLeaf ? NodeType.FILE : NodeType.DIRECTORY,
+                path.replace(/^\/+/, '')
+              )
+            }}
             {...treeProps}
           />
         </div>
