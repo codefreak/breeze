@@ -74,6 +74,12 @@ class FileResolver
         ) ?: throw RuntimeException("Could not rename file")
     }
 
+    fun unlink(path: String): Boolean {
+        return filesService.unlink(
+                Paths.get(path)
+        )
+    }
+
     fun fileChange(): Publisher<FilesystemEventModel> {
         log.info("Listening on file changes")
         return Flowable.create<FilesystemEventModel>({ emitter ->

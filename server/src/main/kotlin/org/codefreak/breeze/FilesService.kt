@@ -98,4 +98,13 @@ class FilesService(val rootPath: Path) {
         file.renameTo(newFile)
         return newFile
     }
+
+    fun unlink(path: Path): Boolean {
+        val file = pathToFile(path)
+        return when {
+            !file.exists() -> true
+            file.isDirectory -> file.deleteRecursively()
+            else -> file.delete()
+        }
+    }
 }

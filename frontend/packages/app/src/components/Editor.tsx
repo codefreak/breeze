@@ -9,11 +9,13 @@ import { TabsProps } from 'antd/es/tabs'
 import {
   useCreateDirectoryMutation,
   useCreateFileMutation,
+  useDeleteFileMutation,
   useMoveFileMutation
 } from '../generated/graphql'
 import withConfig, { WithConfigProps } from '../util/withConfig'
 
 import './Editor.less'
+import { assertWrappingType } from 'graphql'
 
 interface EditorProps extends WithConfigProps {
   defaultFile?: string
@@ -28,6 +30,7 @@ const Editor: React.FC<EditorProps> = ({ config: { mainFile } }) => {
   const [createFile] = useCreateFileMutation()
   const [createDirectory] = useCreateDirectoryMutation()
   const [moveFile] = useMoveFileMutation()
+  const [deleteFile] = useDeleteFileMutation()
 
   const onEditTab: TabsProps['onEdit'] = useCallback(
     (targetKey, action) => {
@@ -85,6 +88,15 @@ const Editor: React.FC<EditorProps> = ({ config: { mainFile } }) => {
     })
   }
 
+  const onDeleteFile: FileTreeProps['onDelete'] = async (_, path) => {
+    console.log(path)
+    await deleteFile({
+      variables: {
+        path
+      }
+    })
+  }
+
   return (
     <Row style={{ height: '100%' }}>
       <Col span={7}>
@@ -93,6 +105,7 @@ const Editor: React.FC<EditorProps> = ({ config: { mainFile } }) => {
             onFileClick={onFileClick}
             onCreate={onCreateFile}
             onRename={onFileRename}
+            onDelete={onDeleteFile}
           />
         </BreezeComponent>
       </Col>

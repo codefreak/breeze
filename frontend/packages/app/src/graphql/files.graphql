@@ -41,6 +41,10 @@ mutation MoveFile($oldPath: String!, $newPath: String!) {
   }
 }
 
+mutation DeleteFile($path: String!) {
+  unlink(path: $path)
+}
+
 subscription FileChanged {
   fileChange {
     path

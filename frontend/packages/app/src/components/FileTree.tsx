@@ -1,4 +1,4 @@
-import { Tree, Input, Menu, Dropdown } from 'antd'
+import { Tree, Input, Menu, Dropdown, Modal } from 'antd'
 import React, { KeyboardEventHandler, useEffect, useState } from 'react'
 import './FileTree.less'
 import { listToTreeByPath, sortTree, walkTree } from '@codefreak/tree-utils'
@@ -9,7 +9,8 @@ import {
   FileAddOutlined,
   FolderAddOutlined,
   EditOutlined,
-  DeleteOutlined
+  DeleteOutlined,
+  ExclamationCircleOutlined
 } from '@ant-design/icons'
 import useFiles from '../hooks/useFiles'
 import { TreeProps } from 'antd/lib/tree'
@@ -46,10 +47,11 @@ export interface FileTreeProps extends TreeProps {
   onCreate?: (type: NodeType, name: string) => Promise<void>
   onRename?: (oldName: string, newName: string) => Promise<void>
   onFileClick?: (type: NodeType, name: string) => Promise<void>
+  onDelete?: (type: NodeType, path: string) => Promise<void>
 }
 
 const FileTree: React.FC<FileTreeProps> = props => {
-  const { onCreate, onRename, onFileClick, ...treeProps } = props
+  const { onCreate, onRename, onFileClick, onDelete, ...treeProps } = props
   const { loading, data } = useFiles()
   const [rightClicked, setRightClicked] = useState<
     | {
@@ -75,7 +77,7 @@ const FileTree: React.FC<FileTreeProps> = props => {
     }
   }, [expandedKeys, adding])
 
-  const onAddClick = (type: NodeType) => () => {
+  const buildOnAddClick = (type: NodeType) => () => {
     let parentDir
     if (rightClicked?.isFile === false) {
       // if you add something on a folder add a child
@@ -86,6 +88,29 @@ const FileTree: React.FC<FileTreeProps> = props => {
     }
     setRenaming(undefined)
     setAdding({ parent: parentDir, type })
+  }
+
+  const onDeleteClick = () => {
+    const path = rightClicked?.path
+    if (!path) {
+      return
+    }
+    Modal.confirm({
+      icon: <ExclamationCircleOutlined />,
+      title: `Really delete ${basename(path)}?`,
+      content: 'This action cannot be undone!',
+      okText: 'Yes',
+      okType: 'danger',
+      cancelText: 'No',
+      onOk: async () => {
+        if (onDelete) {
+          await onDelete(
+            rightClicked?.isFile === false ? NodeType.DIRECTORY : NodeType.FILE,
+            path
+          )
+        }
+      }
+    })
   }
 
   const rightMenu = (
@@ -104,15 +129,19 @@ const FileTree: React.FC<FileTreeProps> = props => {
         style={{
           color: 'red'
         }}
+        onClick={onDeleteClick}
       >
         Delete {rightClicked?.isFile ? 'File' : 'Directory'}
       </Menu.Item>
-      <Menu.Item icon={<FileAddOutlined />} onClick={onAddClick(NodeType.FILE)}>
+      <Menu.Item
+        icon={<FileAddOutlined />}
+        onClick={buildOnAddClick(NodeType.FILE)}
+      >
         New file
       </Menu.Item>
       <Menu.Item
         icon={<FolderAddOutlined />}
-        onClick={onAddClick(NodeType.DIRECTORY)}
+        onClick={buildOnAddClick(NodeType.DIRECTORY)}
       >
         New directory
       </Menu.Item>
