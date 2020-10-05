@@ -5,7 +5,7 @@ interface PathItem {
   path: string
 }
 
-type PathTreeItem = PathItem & TreeNode<PathItem>
+type PathTreeItem = PathItem & TreeNode<PathItem> & { children: PathTreeItem[] }
 
 const TEST_PATH_LIST: PathItem[] = [
   { path: '/' },

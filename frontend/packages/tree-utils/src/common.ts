@@ -6,7 +6,7 @@ export type PropertiesOfType<T, S> = {
 
 export interface TreeNode<T> {
   key: IndexType
-  children: (T & TreeNode<T>)[]
+  children?: (T & TreeNode<T>)[]
   parent?: T & TreeNode<T>
 }
 
@@ -47,7 +47,11 @@ export const objectListToTree = <T>(
 
     if (parent !== undefined && parent !== child) {
       // there is a parent node for this item
-      parent.children.push(child)
+      if (parent.children) {
+        parent.children.push(child)
+      } else {
+        parent.children = [child]
+      }
       child.parent = parent
     } else {
       // is a root node (or orphan)
@@ -112,4 +116,18 @@ export const sortTree = <T>(
       }
     })
     .sort(sortFunction)
+}
+
+export type TreeNodeWalkFunction<T> = (node: T & TreeNode<T>) => void
+
+export const walkTree = <T>(
+  nodes: Array<T & TreeNode<T>>,
+  walkFunction: TreeNodeWalkFunction<T>
+): void => {
+  return nodes.forEach(node => {
+    if (node.children) {
+      walkTree(node.children, walkFunction)
+    }
+    walkFunction(node)
+  })
 }

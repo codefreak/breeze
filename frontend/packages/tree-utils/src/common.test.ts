@@ -12,7 +12,7 @@ const TEST_LIST: ListItemType[] = [
   { id: 3, parentId: 2 } // 0-2-3
 ]
 
-type TreeItem = ListItemType & TreeNode<ListItemType>
+type TreeItem = ListItemType & TreeNode<ListItemType> & { children: TreeItem[] }
 
 describe('listToTreeByProperty', () => {
   it('returns empty tree for empty input', () => {

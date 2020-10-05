@@ -1,14 +1,8 @@
-import { Tree, Button, Input, Menu, Dropdown } from 'antd'
-import React, {
-  KeyboardEventHandler,
-  useCallback,
-  useEffect,
-  useRef,
-  useState
-} from 'react'
+import { Tree, Input, Menu, Dropdown } from 'antd'
+import React, { KeyboardEventHandler, useEffect, useState } from 'react'
 import './FileTree.less'
-import { listToTreeByPath, sortTree } from '@codefreak/tree-utils'
-import { basename } from 'path'
+import { listToTreeByPath, sortTree, walkTree } from '@codefreak/tree-utils'
+import { basename, dirname, join } from 'path'
 import {
   FileOutlined,
   FolderOutlined,
@@ -19,106 +13,37 @@ import {
 } from '@ant-design/icons'
 import useFiles from '../hooks/useFiles'
 import { TreeProps } from 'antd/lib/tree'
-import { CheckOutlined, LoadingOutlined } from '@ant-design/icons/lib'
 import LoadingIndicator from './LoadingIndicator'
+import { InputProps } from 'antd/es/input'
 
 export enum NodeType {
   FILE = 'file',
   DIRECTORY = 'directory'
 }
 
-export interface FileTreeAdderProps {
-  onCreate?: (type: NodeType, name: string) => Promise<void>
+interface TreeAddInputProps extends InputProps {
+  onCancel?: () => void
+  onCreate?: (name: string) => Promise<void>
 }
 
-const FileTreeAdder: React.FC<FileTreeAdderProps> = ({ onCreate }) => {
-  const [nodeAddType, setNodeAddType] = useState<NodeType>()
-  const inputRef = useRef<Input>(null)
-  const [name, setName] = useState<string>('')
-  const [loading, setLoading] = useState<boolean>(false)
+const TreeAddInput: React.FC<TreeAddInputProps> = props => {
+  const { onCreate, onCancel, ...inputProps } = props
 
-  const reset = useCallback(() => {
-    setName('')
-    setNodeAddType(undefined)
-    setLoading(false)
-  }, [setName, setLoading, setNodeAddType])
-
-  useEffect(() => {
-    if (inputRef.current) {
-      inputRef.current.focus()
+  const onKeyPress: KeyboardEventHandler<HTMLInputElement> = e => {
+    if (e.keyCode === 27) {
+      // ESC
+      onCancel && onCancel()
+    } else if (e.keyCode === 13) {
+      // Enter
+      onCreate && onCreate(e.currentTarget.value)
     }
-  }, [inputRef, nodeAddType])
+  }
 
-  const create = useCallback(() => {
-    if (onCreate && nodeAddType && name.trim()) {
-      setLoading(true)
-      onCreate(nodeAddType, name)
-        .then(reset)
-        .catch(() => {
-          setLoading(false)
-        })
-    } else {
-      reset()
-    }
-  }, [onCreate, setLoading, reset, nodeAddType, name])
-
-  const onKeyPress = useCallback<KeyboardEventHandler>(
-    e => {
-      if (e.keyCode === 27) {
-        // ESC
-        reset()
-      } else if (e.keyCode === 13) {
-        // Enter
-        create()
-      }
-    },
-    [reset, create]
-  )
-
-  return (
-    <div className="file-tree-footer">
-      {nodeAddType && (
-        <div className="file-tree-footer-adding">
-          <Input
-            prefix={
-              nodeAddType === NodeType.FILE ? (
-                <FileOutlined />
-              ) : (
-                <FolderOutlined />
-              )
-            }
-            suffix={
-              loading ? (
-                <LoadingOutlined />
-              ) : (
-                <CheckOutlined onClick={name.trim() ? create : undefined} />
-              )
-            }
-            placeholder={`Enter name for new ${nodeAddType}…`}
-            size="small"
-            ref={inputRef}
-            onKeyDown={onKeyPress}
-            value={name}
-            onChange={event => setName(event.target.value)}
-          />
-        </div>
-      )}
-      <div>
-        <Button
-          onClick={() => setNodeAddType(NodeType.FILE)}
-          icon={<FileAddOutlined />}
-        />
-        <Button
-          onClick={() => setNodeAddType(NodeType.DIRECTORY)}
-          icon={<FolderAddOutlined />}
-        />
-      </div>
-    </div>
-  )
+  return <Input {...inputProps} onKeyDown={onKeyPress} />
 }
 
 export interface FileTreeProps extends TreeProps {
-  onCreate?: FileTreeAdderProps['onCreate']
+  onCreate?: (type: NodeType, name: string) => Promise<void>
 }
 
 const FileTree: React.FC<FileTreeProps> = ({ onCreate, ...treeProps }) => {
@@ -130,6 +55,32 @@ const FileTree: React.FC<FileTreeProps> = ({ onCreate, ...treeProps }) => {
       }
     | undefined
   >(undefined)
+  const [adding, setAdding] = useState<
+    | {
+        parent: string
+        type: NodeType
+      }
+    | undefined
+  >()
+  const [expandedKeys, setExpandedKeys] = useState<string[]>([])
+
+  useEffect(() => {
+    if (adding && expandedKeys.indexOf(adding.parent) === -1) {
+      setExpandedKeys([adding.parent, ...expandedKeys])
+    }
+  }, [expandedKeys, adding])
+
+  const onAddClick = (type: NodeType) => () => {
+    let parentDir
+    if (rightClicked?.isFile === false) {
+      // if you add something on a folder add a child
+      parentDir = rightClicked.path
+    } else {
+      // if you add something on a file add a sibling
+      parentDir = rightClicked?.path ? dirname(rightClicked.path) : '/'
+    }
+    setAdding({ parent: parentDir, type })
+  }
 
   const rightMenu = (
     <Menu className="breeze-file-dropdown">
@@ -144,8 +95,15 @@ const FileTree: React.FC<FileTreeProps> = ({ onCreate, ...treeProps }) => {
       >
         Delete {rightClicked?.isFile ? 'File' : 'Directory'}
       </Menu.Item>
-      <Menu.Item icon={<FileAddOutlined />}>New file</Menu.Item>
-      <Menu.Item icon={<FolderAddOutlined />}>New directory</Menu.Item>
+      <Menu.Item icon={<FileAddOutlined />} onClick={onAddClick(NodeType.FILE)}>
+        New file
+      </Menu.Item>
+      <Menu.Item
+        icon={<FolderAddOutlined />}
+        onClick={onAddClick(NodeType.DIRECTORY)}
+      >
+        New directory
+      </Menu.Item>
     </Menu>
   )
 
@@ -159,12 +117,49 @@ const FileTree: React.FC<FileTreeProps> = ({ onCreate, ...treeProps }) => {
         path: e.path,
         isLeaf: e.__typename === 'File',
         title: basename(e.path),
-        icon: e.__typename === 'File' ? <FileOutlined /> : <FolderOutlined />
+        icon: e.__typename === 'File' ? <FileOutlined /> : <FolderOutlined />,
+        disabled: adding !== undefined
       })),
       'path'
     )
   )
-  const rootTreeNode = treeData[0].key === '/' ? treeData[0].children : treeData
+  const rootTreeNodes: TreeProps['treeData'] =
+    (treeData[0].key === '/' ? treeData[0].children : treeData) || []
+
+  if (adding !== undefined) {
+    // insert adding node at right position
+    const addTreeNode = {
+      key: '__',
+      icon:
+        adding.type === NodeType.FILE ? (
+          <FileAddOutlined />
+        ) : (
+          <FolderAddOutlined />
+        ),
+      title: (
+        <TreeAddInput
+          size="small"
+          autoFocus
+          onCancel={() => setAdding(undefined)}
+          onCreate={async name => {
+            const path = join(adding.parent, name)
+            onCreate && (await onCreate(adding.type, path))
+            setAdding(undefined)
+          }}
+        />
+      ),
+      className: 'breeze-file-tree-adder'
+    }
+    if (adding.parent === '/') {
+      rootTreeNodes.push(addTreeNode)
+    } else {
+      walkTree(rootTreeNodes, node => {
+        if (node.key === adding.parent) {
+          node.children = [addTreeNode, ...(node.children || [])]
+        }
+      })
+    }
+  }
 
   const onItemRightClick: TreeProps['onRightClick'] = ({ node, event }) => {
     setRightClicked({
@@ -180,15 +175,19 @@ const FileTree: React.FC<FileTreeProps> = ({ onCreate, ...treeProps }) => {
           <Tree
             draggable={true}
             onRightClick={onItemRightClick}
-            defaultExpandedKeys={['/']}
             blockNode
+            expandedKeys={expandedKeys}
+            onExpand={(newExpandedKeys, info) => {
+              console.log(newExpandedKeys)
+              console.log(info)
+              setExpandedKeys([...newExpandedKeys.map(e => e.toString())])
+            }}
             showIcon={true}
-            treeData={rootTreeNode}
+            treeData={rootTreeNodes}
             {...treeProps}
           />
         </div>
       </Dropdown>
-      <FileTreeAdder onCreate={onCreate} />
     </div>
   )
 }
