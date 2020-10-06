@@ -1,5 +1,6 @@
 package org.codefreak.breeze
 
+import com.beust.jcommander.JCommander
 import com.github.dockerjava.api.DockerClient
 import com.github.dockerjava.core.DefaultDockerClientConfig
 import com.github.dockerjava.core.DockerClientBuilder
@@ -12,6 +13,7 @@ import com.google.inject.TypeLiteral
 import com.google.inject.multibindings.Multibinder
 import graphql.GraphQL
 import graphql.kickstart.tools.GraphQLResolver
+import io.vertx.core.impl.launcher.VertxCommandLauncher
 import org.codefreak.breeze.docker.DockerWorkspace
 import org.codefreak.breeze.graphql.ConfigResolver
 import org.codefreak.breeze.graphql.FileResolver
@@ -44,6 +46,17 @@ class GraphqlServerBinder : AbstractModule() {
     @Singleton
     fun fileService(workspace: Workspace): FilesService {
         return FilesService(workspace.localPath)
+    }
+
+    @Provides
+    @Singleton
+    fun configuration(): BreezeConfiguration {
+        val config = BreezeConfiguration()
+        JCommander.newBuilder()
+                .addObject(config)
+                .build()
+                .parse(*VertxCommandLauncher.getProcessArguments().toTypedArray())
+        return config
     }
 
     override fun configure() {

@@ -4,7 +4,9 @@ import com.google.inject.Inject
 import com.google.inject.Singleton
 import graphql.GraphQL
 import io.vertx.core.AbstractVerticle
+import io.vertx.core.Context
 import io.vertx.core.Future
+import io.vertx.core.Vertx
 import io.vertx.core.http.HttpMethod
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.handler.CorsHandler
@@ -33,9 +35,12 @@ class GraphqlServerVerticle
         private val log = LoggerFactory.getLogger(GraphqlServerVerticle::class.java)
     }
 
-    override fun start(startFuture: Future<Void>) {
+    override fun init(vertx: Vertx, context: Context) {
+        super.init(vertx, context)
         vertx.eventBus().registerDefaultCodec(FilesystemEvent::class.java, FilesystemEventCodec())
+    }
 
+    override fun start(startFuture: Future<Void>) {
         config.containerId.let {
             if (it != null) {
                 log.info("Running inside container with id $it")
@@ -71,12 +76,12 @@ class GraphqlServerVerticle
     private fun startWorkspace(): Future<Unit> {
         log.info("Initializing workspace")
 
-        return workspace.create(config.workspaceReplCmd, config.defaultEnv).compose {
+        return workspace.create(config.workspaceReplCmd, config.environment).compose {
             log.info("Starting workspace")
             workspace.start()
         }.compose {
             log.info("Provisioning workspace")
-            workspace.exec(arrayOf("/bin/sh", "-e", "-c", config.provisionScript), root = true)
+            workspace.exec(arrayOf("/bin/sh", "-e", "-c", config.buildProvisionScript()), root = true)
         }.compose { processUid ->
             val stdout = workspace.stdout(processUid)
             workspace.withProcess(processUid) { process ->

@@ -48,6 +48,7 @@ dependencies {
 
     // Useful misc libs
     implementation 'commons-io:commons-io:2.7'
+    implementation 'com.beust:jcommander:1.78'
 }
 
 vertx {
