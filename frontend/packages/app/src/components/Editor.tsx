@@ -15,21 +15,38 @@ import {
 import withConfig, { WithConfigProps } from '../util/withConfig'
 
 import './Editor.less'
+import useWorkspaceOption from '../hooks/useWorkspaceOption'
 
 interface EditorProps extends WithConfigProps {
   defaultFile?: string
 }
 
 const Editor: React.FC<EditorProps> = ({ config: { mainFile } }) => {
-  const [fileStack, setFileStack] = useState<string[]>(
+  const [fileStack, setFileStack] = useWorkspaceOption<string[]>(
+    'opened-files',
     mainFile ? [mainFile] : []
   )
-  const [currentFile, setCurrentFile] = useState<string>(fileStack[0])
+  const [currentFile, setCurrentFile] = useWorkspaceOption<string>(
+    'current-file',
+    fileStack[0]
+  )
   const [selectedPath, setSelectedPath] = useState<string>('/')
   const [createFile] = useCreateFileMutation()
   const [createDirectory] = useCreateDirectoryMutation()
   const [moveFile] = useMoveFileMutation()
   const [deleteFile] = useDeleteFileMutation()
+
+  const setOpenFile = useCallback(
+    (path: string) => {
+      const normalizedPath = path.replace(/^\/+/, '')
+      // insert after current opened file
+      if (fileStack.indexOf(normalizedPath) === -1) {
+        setFileStack(insertAfter(fileStack, normalizedPath, currentFile))
+      }
+      setCurrentFile(normalizedPath)
+    },
+    [fileStack, setFileStack, setCurrentFile, currentFile]
+  )
 
   const onEditTab: TabsProps['onEdit'] = useCallback(
     (targetKey, action) => {
@@ -56,29 +73,23 @@ const Editor: React.FC<EditorProps> = ({ config: { mainFile } }) => {
         setSelectedPath(path)
         return
       }
-      // insert after current opened file
-      if (fileStack.indexOf(path) === -1) {
-        setFileStack(insertAfter(fileStack, path, currentFile))
-      }
-      setCurrentFile(path)
+      setOpenFile(path)
     },
-    [fileStack, setFileStack, setCurrentFile, currentFile, setSelectedPath]
+    [setSelectedPath, setOpenFile]
   )
 
   const onCreateFile: FileTreeProps['onCreate'] = useCallback(
     async (type, name) => {
-      const commonOptions = {
-        variables: {
-          path: join(selectedPath, name)
-        }
-      }
+      const path = join(selectedPath, name)
+      const commonOptions = { variables: { path } }
       if (type === NodeType.DIRECTORY) {
         await createDirectory(commonOptions)
       } else {
         await createFile(commonOptions)
+        setOpenFile(path)
       }
     },
-    [selectedPath, createFile, createDirectory]
+    [selectedPath, createFile, createDirectory, setOpenFile]
   )
 
   const onFileRename: FileTreeProps['onRename'] = async (oldPath, newPath) => {
