@@ -18,6 +18,9 @@ class BreezeConfiguration {
     @Parameter
     var arguments: List<String> = arrayListOf()
 
+    @Parameter(names = ["--http-port"])
+    var httpPort: Int = 3000
+
     @Parameter(names = ["--instance-id"])
     var instanceId: String = java.util.UUID.randomUUID().toString()
 
@@ -28,7 +31,7 @@ class BreezeConfiguration {
     var workspaceDockerImage = "python:3.8.2-buster"
 
     @Parameter(names = ["--workspace-path"])
-    var workspaceCodePath = "/workspace"
+    var workspaceCodePath = "/home/coder/project"
 
     @Parameter(names = ["--workdir"])
     var dockerWorkingDir = workspaceCodePath

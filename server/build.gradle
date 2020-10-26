@@ -101,11 +101,11 @@ jib {
                 "--conf",
                 "/app/resources/conf/config.json"
         ]
-        ports = ["8080"]
+        ports = ["3000"]
         // set image build date to current timestamp
         creationTime = "USE_CURRENT_TIMESTAMP"
         volumes = [
-                "/workspace"
+                "/home/coder/project"
         ]
     }
 }

@@ -124,7 +124,7 @@ class GraphqlServerVerticle
 
         vertx.createHttpServer()
                 .requestHandler(router::handle)
-                .listen(8080)
+                .listen(config.httpPort)
         return Future.succeededFuture()
     }
 }
