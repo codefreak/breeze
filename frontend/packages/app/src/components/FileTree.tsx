@@ -17,6 +17,9 @@ import { TreeProps } from 'antd/lib/tree'
 import LoadingIndicator from './LoadingIndicator'
 import { InputProps } from 'antd/es/input'
 
+// special key for the tree node containing the input field (creating, renaming files)
+const NODE_CREATOR_KEY = '\0'
+
 export enum NodeType {
   FILE = 'file',
   DIRECTORY = 'directory'
@@ -199,7 +202,7 @@ const FileTree: React.FC<FileTreeProps> = props => {
   if (adding !== undefined) {
     // insert adding node at right position
     const addTreeNode = {
-      key: '\0',
+      key: NODE_CREATOR_KEY,
       icon:
         adding.type === NodeType.FILE ? (
           <FileAddOutlined />
@@ -231,7 +234,7 @@ const FileTree: React.FC<FileTreeProps> = props => {
 
   const onItemRightClick: TreeProps['onRightClick'] = ({ node }) => {
     const path = node.key.toString()
-    if (path.indexOf('\0') !== -1) {
+    if (path.indexOf(NODE_CREATOR_KEY) !== -1) {
       return
     }
     setRightClicked({
@@ -240,47 +243,59 @@ const FileTree: React.FC<FileTreeProps> = props => {
     })
   }
 
+  const onDrop: FileTreeProps['onDrop'] = async ({
+    dragNode,
+    node,
+    dropToGap
+  }) => {
+    if (!onMove) {
+      return
+    }
+    if (!dropToGap && node.isLeaf) {
+      // cannot drop onto files
+      return
+    }
+    const path = dragNode.key.toString()
+    const target = dropToGap
+      ? dirname(node.key.toString())
+      : node.key.toString()
+    if (path === target) {
+      return
+    }
+    await onMove(path, target)
+  }
+
+  const onClick: FileTreeProps['onClick'] = async (e, treeNode) => {
+    const path = treeNode.key.toString()
+    if (path === NODE_CREATOR_KEY || !onFileClick) {
+      return
+    }
+    await onFileClick(
+      treeNode.isLeaf ? NodeType.FILE : NodeType.DIRECTORY,
+      path.replace(/^\/+/, '')
+    )
+  }
+
+  // we manage the expanded props manually so we can expand directories if new nodes are created inside it
+  const onExpand: FileTreeProps['onExpand'] = newExpandedKeys => {
+    setExpandedKeys([...newExpandedKeys.map(e => e.toString())])
+  }
+
   return (
     <div className="breeze-file-tree">
       <Dropdown overlay={rightMenu} trigger={['contextMenu']}>
         <div className="breeze-file-tree-trigger">
           <Tree
-            draggable={true}
-            onRightClick={onItemRightClick}
             blockNode
-            expandedKeys={expandedKeys}
-            onExpand={newExpandedKeys => {
-              setExpandedKeys([...newExpandedKeys.map(e => e.toString())])
-            }}
             showIcon={true}
-            treeData={rootTreeNodes}
-            onClick={async (e, treeNode) => {
-              const path = treeNode.key.toString()
-              if (path === '\0' || !onFileClick) {
-                return
-              }
-              await onFileClick(
-                treeNode.isLeaf ? NodeType.FILE : NodeType.DIRECTORY,
-                path.replace(/^\/+/, '')
-              )
-            }}
-            onDrop={async ({ dragNode, node, dropToGap }) => {
-              if (!onMove) {
-                return
-              }
-              if (!dropToGap && !node.isLeaf) {
-                return
-              }
-              const path = dragNode.key.toString()
-              const target = dropToGap
-                ? dirname(node.key.toString())
-                : node.key.toString()
-              if (path === target) {
-                return
-              }
-              await onMove(path, target)
-            }}
             {...treeProps}
+            treeData={rootTreeNodes}
+            expandedKeys={expandedKeys}
+            onExpand={onExpand}
+            onClick={onClick}
+            onRightClick={onItemRightClick}
+            draggable={onMove !== undefined}
+            onDrop={onDrop}
           />
         </div>
       </Dropdown>
