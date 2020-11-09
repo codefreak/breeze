@@ -64,11 +64,15 @@ class GraphqlServerVerticle
         filesystemWatcher.stop()
         log.info("Stopping workspace…")
         workspace.stop().onSuccess {
-            log.info("removing workspace…")
-            workspace.remove().onComplete {
-                log.info("Done.")
-                @Suppress("DEPRECATION")
-                stopFuture.complete()
+            if (config.removeOnExit) {
+                log.info("removing workspace…")
+                workspace.remove().onComplete {
+                    log.info("Done.")
+                    @Suppress("DEPRECATION")
+                    stopFuture.complete()
+                }
+            } else {
+                log.info("Removing on exit is disabled")
             }
         }
     }
@@ -102,8 +106,14 @@ class GraphqlServerVerticle
             log.info("Restarting workspace after provisioning...")
             workspace.restart()
         }.onComplete {
-            log.info("Initializing default file ${config.mainFile}")
-            filesService.writeFile(workspace.localPath.resolve(config.mainFile), config.mainFileContent)
+            config.mainFile?.let { mainFilePath ->
+                log.info("Creating default file ${mainFilePath}")
+                val mainFile = filesService.getFile(mainFilePath)
+                if (!mainFile.exists()) {
+                    filesService.writeFile(mainFile.toPath(), "")
+                }
+            }
+            log.info("Watching ${workspace.localPath} for file changes")
             filesystemWatcher.watch()
         }.onFailure { t ->
             log.error("Provisioning failed: " + t.message)

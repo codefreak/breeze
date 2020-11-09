@@ -38,10 +38,12 @@ class DockerWorkspace
 
     private var containerId: String? = null
 
+    private val containerName = "breeze-ws-${config.instanceId}"
+
     override fun doCreate(cmd: Array<String>, env: Map<String, String>?): Future<Unit> {
         // use existing container
         if (containerId !== null) {
-            return Future.succeededFuture()
+            return Future.succeededFuture<Unit>()
         }
 
         val promise = Promise.promise<Unit>()
@@ -54,13 +56,29 @@ class DockerWorkspace
             }
         }
 
-        // pull docker image and create container
+        // try to use existing container
+        // otherwise pull docker image and create new container
         val imageName = normalizeImageName(config.workspaceDockerImage)
-        return promise.future().compose {
-            return@compose pullDockerImage(imageName)
-        }.compose {
-            return@compose createContainer(imageName, cmd, env)
-        }
+        return promise.future()
+                .compose {
+                    getContainerId()
+                }
+                .compose(
+                        {
+                            containerId = it
+                            log.info("Using existing workspace container with id $it")
+                            Future.succeededFuture<Unit>()
+                        },
+                        {
+                            pullDockerImage(imageName).compose {
+                                createContainer(imageName, cmd, env)
+                            }.compose {
+                                containerId = it
+                                log.info("Created workspace container $it")
+                                Future.succeededFuture<Unit>()
+                            }
+                        }
+                )
     }
 
     override fun doStart(): Future<out Process> {
@@ -91,11 +109,20 @@ class DockerWorkspace
         return block(containerId ?: throw RuntimeException("No container id"))
     }
 
+    private fun getContainerId(): Future<String> = async(vertx) {
+        docker.inspectContainerCmd(containerName).exec().id
+    }
+
     private fun createContainer(imageName: String, cmd: Array<String>, env: Map<String, String>?) = async(vertx) {
         val volume = Volume(config.dockerWorkingDir)
         val workspaceSource = getWorkspaceDirBindSource()
         log.info("Mounting $workspaceSource to ${config.dockerWorkingDir}")
+        val labels: MutableMap<String, String> = mutableMapOf(
+                "org.codefreak.breeze.ws" to config.instanceId
+        )
+        config.containerId?.let { labels["org.codefreak.breeze.depends-on"] = it }
         val container = docker.createContainerCmd(imageName)
+                .withName(containerName)
                 .withCmd(*cmd)
                 .withTty(true)
                 .withEnv(env?.toKeyValueList() ?: listOf())
@@ -105,6 +132,7 @@ class DockerWorkspace
                 .withWorkingDir(config.dockerWorkingDir)
                 .withVolumes(volume)
                 .withUser("${config.dockerUid}:${config.dockerGid}")
+                .withLabels(labels)
                 .withHostConfig(
                         HostConfig.newHostConfig()
                                 .withBinds(
@@ -112,8 +140,7 @@ class DockerWorkspace
                                 )
                 )
                 .exec()
-        containerId = container.id
-        log.info("Created workspace container $containerId")
+        container.id
     }
 
     private fun pullDockerImage(imageName: String) = async(vertx) {

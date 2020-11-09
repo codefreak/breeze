@@ -12,3 +12,4 @@ out/
 .settings
 .classpath
 .breeze
+server/webroot

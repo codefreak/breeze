@@ -43,7 +43,7 @@
     "xterm-addon-fit": "^0.3.0"
   },
   "scripts": {
-    "start": "yarn run generate && craco start",
+    "start": "yarn run generate && PORT=3001 craco start",
     "build": "yarn run generate && craco build",
     "test": "craco test",
     "lint:tsc": "tsc",

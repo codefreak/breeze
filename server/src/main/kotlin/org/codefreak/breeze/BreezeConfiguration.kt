@@ -28,7 +28,7 @@ class BreezeConfiguration {
     var workspaceHostname = "breeze"
 
     @Parameter(names = ["--image"])
-    var workspaceDockerImage = "python:3.8.2-buster"
+    var workspaceDockerImage = "ubuntu:20.04"
 
     @Parameter(names = ["--workspace-path"])
     var workspaceCodePath = "/home/coder/project"
@@ -37,18 +37,7 @@ class BreezeConfiguration {
     var dockerWorkingDir = workspaceCodePath
 
     @Parameter(names = ["--main-file"])
-    var mainFile = "main.py"
-
-    @Parameter(names = ["--main-file-content"])
-    var mainFileContent = """
-        def main():
-            print("Hey, please enter your name: ", end = '')
-            name=input()
-            print("\nWelcome to Breeze, %s!\n" % (name))
-        
-        if __name__ == '__main__':
-            main()
-    """.trimIndent()
+    var mainFile: String? = null
 
     @Parameter(names = ["--repl-cmd"])
     var workspaceReplCmd = arrayOf("/usr/bin/env", "bash", "--noprofile", "--norc", "-i")
@@ -61,7 +50,7 @@ class BreezeConfiguration {
 
     // TODO: substitution of commands? or pass to /bin/bash -c to parse environment variables
     @Parameter(names = ["--run-cmd"])
-    var runCmd = arrayOf("/usr/bin/env", "python", mainFile)
+    var runCmd = arrayOf("/usr/bin/env", "echo", "There is no run command specified. Please configure it with --run-cmd")
 
     @Parameter(names = ["--container-id"])
     var containerId = getSurroundingContainerId()
@@ -79,13 +68,16 @@ class BreezeConfiguration {
     var dockerGroupName = "coder"
 
     @Parameter(names = ["--home"])
-    var dockerHomeDir = "/home/$dockerUserName"
+    var homeDir = "/home/$dockerUserName"
+
+    @Parameter(names = ["--remove-on-exit"])
+    var removeOnExit = containerId == null
 
     fun buildProvisionScript() = """
-        mkdir -p "$dockerHomeDir"
-        chmod 0700 "$dockerHomeDir"
-        chown "$dockerUid":"$dockerGid" "$dockerHomeDir"
+        mkdir -p "$homeDir"
+        chmod 0700 "$homeDir"
+        chown "$dockerUid":"$dockerGid" "$homeDir"
         echo "$dockerGroupName:x:$dockerGid:" >> /etc/group
-        echo "${dockerUserName}:x:$dockerUid:$dockerGid:,,,:$dockerHomeDir:/bin/bash" >> /etc/passwd
+        echo "${dockerUserName}:x:$dockerUid:$dockerGid:,,,:$homeDir:/bin/bash" >> /etc/passwd
     """.trimIndent()
 }

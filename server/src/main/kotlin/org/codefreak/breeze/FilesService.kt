@@ -5,6 +5,7 @@ import org.codefreak.breeze.graphql.model.FileSystemNode
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.file.Path
+import java.nio.file.Paths
 import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.ZoneId
@@ -73,6 +74,7 @@ class FilesService(val rootPath: Path) {
         return file
     }
 
+    fun getFile(path: String) = pathToFile(Paths.get(path))
     fun pathToFile(path: Path) = resolvePath(path).toFile()
 
     private fun resolvePath(path: Path): Path {

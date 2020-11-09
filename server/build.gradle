@@ -55,6 +55,9 @@ vertx {
     redeploy = false
     mainVerticle = "java-guice:org.codefreak.breeze.GraphqlServerVerticle"
     config = "src/main/resources/conf/config.json"
+    args = [
+            "--instance-id=dev", "--remove-on-exit=false"
+    ]
 }
 
 test {
