@@ -5,6 +5,7 @@ import com.beust.jcommander.Parameters
 import org.codefreak.breeze.util.getGid
 import org.codefreak.breeze.util.getSurroundingContainerId
 import org.codefreak.breeze.util.getUid
+import org.codefreak.breeze.util.splitCommand
 
 /**
  * Make sure the CLI option naming does not collide with Vertx
@@ -40,9 +41,10 @@ class BreezeConfiguration {
     var mainFile: String? = null
 
     @Parameter(names = ["--repl-cmd"])
-    var workspaceReplCmd = arrayOf("/usr/bin/env", "bash", "--noprofile", "--norc", "-i")
+    var workspaceReplCmdString = "/usr/bin/env bash --noprofile --norc -i"
 
-    @Parameter(names = ["--env-map"])
+    val workspaceReplCmd: Array<String> get() = splitCommand(workspaceReplCmdString)
+
     var environment: Map<String, String> = mapOf(
             "TERM" to "xterm",
             "PS1" to "\\[\\e[32m\\]\\W\\[\\e[m\\] \\[\\e[34m\\]\\\\\$\\[\\e[m\\] "
@@ -50,7 +52,9 @@ class BreezeConfiguration {
 
     // TODO: substitution of commands? or pass to /bin/bash -c to parse environment variables
     @Parameter(names = ["--run-cmd"])
-    var runCmd = arrayOf("/usr/bin/env", "echo", "There is no run command specified. Please configure it with --run-cmd")
+    var runCmdString = "/usr/bin/env echo 'There is no run command specified. Please configure it with --run-cmd'"
+
+    val runCmd: Array<String> get() = splitCommand(runCmdString)
 
     @Parameter(names = ["--container-id"])
     var containerId = getSurroundingContainerId()

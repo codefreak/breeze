@@ -43,6 +43,7 @@ class ProcessResolver
                 promise.complete(Workspace.MAIN_PROCESS_ID)
             }
         } else {
+            log.debug("Stating run cmd ${config.runCmd.joinToString(" ")}")
             workspace.exec(config.runCmd).map { processId ->
                 promise.complete(processId)
             }
