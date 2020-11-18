@@ -3,17 +3,17 @@ import { ApolloClient, InMemoryCache } from 'apollo-boost'
 import { WebSocketLink } from 'apollo-link-ws'
 
 export const createSubscriptionClient = () => {
-  const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+  const { protocol, host, pathname } = window.location
+  const wsProtocol = protocol === 'https:' ? 'wss:' : 'ws:'
+  // remove trailing slashes from path
+  const path = pathname.replace(/\/*$/, '')
 
-  return new SubscriptionClient(
-    `${wsProtocol}//${window.location.host}/graphql`,
-    {
-      reconnect: true,
-      timeout: 30000,
-      inactivityTimeout: 0,
-      lazy: true
-    }
-  )
+  return new SubscriptionClient(`${wsProtocol}//${host}${path}/graphql`, {
+    reconnect: true,
+    timeout: 30000,
+    inactivityTimeout: 0,
+    lazy: true
+  })
 }
 
 export const createApolloClient = (subClient: SubscriptionClient) => {
