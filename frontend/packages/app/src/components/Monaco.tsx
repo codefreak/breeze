@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { debounce } from 'ts-debounce'
 import MonacoComp, {
   EditorProps,
@@ -12,6 +12,14 @@ import { Spin } from 'antd'
 interface MonacoProps {
   path: string
   monaco: IMonaco
+}
+
+const preventUnload = () => {
+  const e = (e: BeforeUnloadEvent) => {
+    e.preventDefault()
+  }
+  window.addEventListener('beforeunload', e)
+  return () => window.removeEventListener('beforeunload', e)
 }
 
 const DEFAULT_MONACO_OPTIONS: EditorProps['options'] = {
@@ -34,9 +42,25 @@ const Monaco: React.FC<MonacoProps> = ({ path, monaco }) => {
     monaco.editor.createModel('', undefined, monaco.Uri.file(path))
   const { data } = useGetFileQuery({ variables: { path } })
   const [writeFile] = useWriteFileMutation()
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState<boolean>(false)
   const [monacoInstance, setMonacoInstance] = useState<
     editor.IStandaloneCodeEditor
   >()
+
+  // only writes after a delay of 250ms to server
+  const debouncedWrite = useCallback(
+    debounce((cb?: () => void) => {
+      writeFile({
+        variables: {
+          path,
+          contents: model.getValue()
+        }
+      }).then(() => {
+        if (cb) cb()
+      })
+    }, 250),
+    [model, path]
+  )
 
   useEffect(() => {
     if (monacoInstance) {
@@ -51,17 +75,19 @@ const Monaco: React.FC<MonacoProps> = ({ path, monaco }) => {
   }, [model, data])
 
   useEffect(() => {
-    model.onDidChangeContent(
-      debounce(() => {
-        writeFile({
-          variables: {
-            path,
-            contents: model.getValue()
-          }
-        })
-      }, 1000)
-    )
-  }, [writeFile, model, path])
+    if (hasUnsavedChanges) {
+      return preventUnload()
+    }
+  }, [hasUnsavedChanges])
+
+  useEffect(() => {
+    model.onDidChangeContent(() => {
+      setHasUnsavedChanges(true)
+      debouncedWrite(() => {
+        setHasUnsavedChanges(false)
+      })
+    })
+  }, [model, setHasUnsavedChanges])
 
   return (
     <MonacoComp
