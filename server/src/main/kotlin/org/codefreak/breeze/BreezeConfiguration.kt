@@ -6,6 +6,7 @@ import org.codefreak.breeze.util.getGid
 import org.codefreak.breeze.util.getSurroundingContainerId
 import org.codefreak.breeze.util.getUid
 import org.codefreak.breeze.util.splitCommand
+import java.util.UUID.*
 
 /**
  * Make sure the CLI option naming does not collide with Vertx
@@ -23,7 +24,7 @@ class BreezeConfiguration {
     var httpPort: Int = 3000
 
     @Parameter(names = ["--instance-id"])
-    var instanceId: String = java.util.UUID.randomUUID().toString()
+    var instanceId: String = getSurroundingContainerId() ?: randomUUID().toString()
 
     @Parameter(names = ["--hostname"])
     var workspaceHostname = "breeze"
