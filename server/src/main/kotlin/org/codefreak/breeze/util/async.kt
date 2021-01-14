@@ -14,6 +14,7 @@ inline fun <T> async(vertx: Vertx, crossinline blocking: () -> T): Future<T> {
         try {
             it.complete(blocking())
         } catch (e: Exception) {
+            println(e)
             it.fail(e)
         }
     }, {

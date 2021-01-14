@@ -19,6 +19,8 @@ import org.codefreak.breeze.vertx.FilesystemEvent
 import org.codefreak.breeze.vertx.FilesystemEventCodec
 import org.codefreak.breeze.vertx.FilesystemWatcher
 import org.codefreak.breeze.workspace.Workspace
+import org.codefreak.breeze.workspace.WorkspaceStatus
+import org.codefreak.breeze.workspace.WorkspaceStatusListener
 import org.slf4j.LoggerFactory
 import java.util.stream.Collectors
 
@@ -35,6 +37,8 @@ class GraphqlServerVerticle
         private val log = LoggerFactory.getLogger(GraphqlServerVerticle::class.java)
     }
 
+    var stop = false
+
     override fun init(vertx: Vertx, context: Context) {
         super.init(vertx, context)
         vertx.eventBus().registerDefaultCodec(FilesystemEvent::class.java, FilesystemEventCodec())
@@ -49,21 +53,21 @@ class GraphqlServerVerticle
             }
         }
 
-        // TODO: We should start the webserver first and publish workspace startup progress
-        startWorkspace().compose {
-            startGraphqlServer()
-        }.onComplete {
+        startGraphqlServer()
+        startWorkspace().onComplete {
             @Suppress("DEPRECATION")
             startFuture.complete()
         }
     }
 
     override fun stop(stopFuture: Future<Void>) {
+        stop = true
         log.info("Received shutdown, stopping server…")
         log.info("Stopping file watcher…")
         filesystemWatcher.stop()
         log.info("Stopping workspace…")
         workspace.stop().onSuccess {
+            log.info("Stopped workspace…")
             if (config.removeOnExit) {
                 log.info("removing workspace…")
                 workspace.remove().onComplete {
@@ -73,6 +77,8 @@ class GraphqlServerVerticle
                 }
             } else {
                 log.info("Removing on exit is disabled")
+                @Suppress("DEPRECATION")
+                stopFuture.complete()
             }
         }
     }
@@ -115,6 +121,14 @@ class GraphqlServerVerticle
             }
             log.info("Watching ${workspace.localPath} for file changes")
             filesystemWatcher.watch()
+
+            // restart workspace automatically if something goes south
+            val restartListener: WorkspaceStatusListener = { _, new ->
+                if (!stop && new === WorkspaceStatus.STOPPED) {
+                    workspace.restart()
+                }
+            }
+            workspace.addStatusListener(restartListener)
         }.onFailure { t ->
             log.error("Provisioning failed: " + t.message)
         }.compose {

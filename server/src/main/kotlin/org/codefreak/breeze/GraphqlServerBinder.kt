@@ -19,6 +19,7 @@ import org.codefreak.breeze.graphql.ConfigResolver
 import org.codefreak.breeze.graphql.FileResolver
 import org.codefreak.breeze.graphql.GraphQLFactory
 import org.codefreak.breeze.graphql.ProcessResolver
+import org.codefreak.breeze.graphql.WorkspaceResolver
 import org.codefreak.breeze.workspace.Workspace
 import java.net.URI
 
@@ -66,6 +67,7 @@ class GraphqlServerBinder : AbstractModule() {
             addBinding().to(ProcessResolver::class.java)
             addBinding().to(FileResolver::class.java)
             addBinding().to(ConfigResolver::class.java)
+            addBinding().to(WorkspaceResolver::class.java)
         }
     }
 }

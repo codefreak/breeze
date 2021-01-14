@@ -12,19 +12,39 @@ export enum ConnectionStatus {
 }
 
 /**
+ * https://developer.mozilla.org/de/docs/Web/API/WebSocket/readyState
+ * @param readyState
+ */
+const getConnectionStatusFromReadyState = (
+  readyState: number
+): ConnectionStatus => {
+  switch (readyState) {
+    case 0:
+      return ConnectionStatus.CONNECTING
+    case 1:
+      return ConnectionStatus.CONNECTED
+    case 2:
+    case 3:
+      return ConnectionStatus.DISCONNECTED
+    default:
+      return ConnectionStatus.UNKNOWN
+  }
+}
+
+/**
  * Apollo's connection events are a bit weird at the moment.
  * See https://github.com/apollographql/subscriptions-transport-ws/issues/558
  */
 export const useApolloConnectionStatus = (): ConnectionStatus => {
   const apollo = useApolloClient()
+  // @ts-ignore
+  const subClient = apollo.link.subscriptionClient as SubscriptionClient
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>(
-    ConnectionStatus.UNKNOWN
+    getConnectionStatusFromReadyState(subClient.status)
   )
 
   useEffect(() => {
     if (apollo && apollo.link instanceof WebSocketLink) {
-      // @ts-ignore
-      const subClient = apollo.link.subscriptionClient as SubscriptionClient
       subClient.onConnected(() =>
         setConnectionStatus(ConnectionStatus.CONNECTED)
       )
@@ -41,7 +61,7 @@ export const useApolloConnectionStatus = (): ConnectionStatus => {
         setConnectionStatus(ConnectionStatus.RECONNECTING)
       )
     }
-  }, [apollo, setConnectionStatus])
+  }, [apollo, setConnectionStatus, subClient])
 
   return connectionStatus
 }

@@ -1,10 +1,10 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 import './index.css'
-import App from './App'
 import * as serviceWorker from './serviceWorker'
 import { ApolloProvider } from '@apollo/react-hooks'
 import { createApolloClient, createSubscriptionClient } from './service/apollo'
+import SplashScreen from './SplashScreen'
 
 const subscriptionClient = createSubscriptionClient()
 const apolloClient = createApolloClient(subscriptionClient)
@@ -12,7 +12,7 @@ const apolloClient = createApolloClient(subscriptionClient)
 ReactDOM.render(
   <React.StrictMode>
     <ApolloProvider client={apolloClient}>
-      <App />
+      <SplashScreen />
     </ApolloProvider>
   </React.StrictMode>,
   document.getElementById('root')

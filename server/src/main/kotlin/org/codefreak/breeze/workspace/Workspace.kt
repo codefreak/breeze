@@ -12,6 +12,8 @@ import java.util.UUID
 import kotlin.concurrent.thread
 import kotlin.properties.Delegates
 
+typealias WorkspaceStatusListener = (oldStatus: WorkspaceStatus, newStatus: WorkspaceStatus) -> Unit
+
 /**
  * This abstract workspace class is only responsible for state management
  * TODO: make async thread safe
@@ -26,11 +28,15 @@ abstract class Workspace(
         val MAIN_PROCESS_ID = UUID(0, 0)
     }
 
-    private var status: WorkspaceStatus by Delegates.observable(WorkspaceStatus.UNDEFINED) { _, old, new ->
+    private val workspaceStatusListeners = mutableSetOf<WorkspaceStatusListener>()
+
+    var status: WorkspaceStatus by Delegates.observable(WorkspaceStatus.UNDEFINED) { _, old, new ->
         if (log.isDebugEnabled) {
             log.debug("Workspace status changed: $old -> $new")
         }
+        workspaceStatusListeners.forEach { it(old, new) }
     }
+        private set
 
     private val processMap: MutableMap<UUID, Pair<Process?, CachedTeeInputStream>> = mutableMapOf()
 
@@ -206,6 +212,17 @@ abstract class Workspace(
             }
             Future.succeededFuture(id)
         }
+    }
+
+    fun addStatusListener(statusListener: WorkspaceStatusListener): () -> Unit {
+        workspaceStatusListeners.add(statusListener)
+        return {
+            removeStatusListener(statusListener)
+        }
+    }
+
+    fun removeStatusListener(statusListener: WorkspaceStatusListener) {
+        workspaceStatusListeners.remove(statusListener)
     }
 
     protected abstract fun doExec(cmd: Array<String>, env: Map<String, String>? = null, root: Boolean = false): Future<Process>

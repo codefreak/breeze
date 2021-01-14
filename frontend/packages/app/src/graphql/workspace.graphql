@@ -1,0 +1,3 @@
+subscription WorkspaceStatus {
+    workspaceStatus
+}

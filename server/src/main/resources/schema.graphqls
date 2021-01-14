@@ -31,14 +31,27 @@ type Config {
     mainFile: String
 }
 
+enum ProcessType {
+    DEFAULT, RUN
+}
+
 type Query {
     files: [FileSystemNode!]!
     file(path: String!): FileSystemNode
     config: Config!
 }
 
-enum ProcessType {
-    DEFAULT, RUN
+enum WorkspaceStatus {
+    UNDEFINED,
+    CREATING,
+    CREATED,
+    STARTING,
+    RESTARTING,
+    RUNNING,
+    STOPPING,
+    STOPPED,
+    REMOVING,
+    REMOVED
 }
 
 type Mutation {
@@ -58,4 +71,5 @@ type Subscription {
     fileChange: FilesystemEvent!
     processOutput(id: ID!): String!
     processWait(id: ID!): Int!
+    workspaceStatus: WorkspaceStatus!
 }
