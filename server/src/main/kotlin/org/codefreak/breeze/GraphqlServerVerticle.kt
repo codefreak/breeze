@@ -8,12 +8,14 @@ import io.vertx.core.Context
 import io.vertx.core.Future
 import io.vertx.core.Vertx
 import io.vertx.core.http.HttpMethod
+import io.vertx.core.http.HttpServer
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.handler.CorsHandler
 import io.vertx.ext.web.handler.StaticHandler
 import io.vertx.ext.web.handler.graphql.ApolloWSHandler
 import io.vertx.ext.web.handler.graphql.ApolloWSOptions
 import io.vertx.ext.web.handler.graphql.GraphQLHandler
+import io.vertx.kotlin.core.http.closeAwait
 import org.codefreak.breeze.util.async
 import org.codefreak.breeze.vertx.FilesystemEvent
 import org.codefreak.breeze.vertx.FilesystemEventCodec
@@ -37,6 +39,7 @@ class GraphqlServerVerticle
         private val log = LoggerFactory.getLogger(GraphqlServerVerticle::class.java)
     }
 
+    var httpServer: HttpServer? = null
     var stop = false
 
     override fun init(vertx: Vertx, context: Context) {
@@ -53,7 +56,7 @@ class GraphqlServerVerticle
             }
         }
 
-        startGraphqlServer()
+        httpServer = startGraphqlServer()
         startWorkspace().onComplete {
             @Suppress("DEPRECATION")
             startFuture.complete()
@@ -66,20 +69,25 @@ class GraphqlServerVerticle
         log.info("Stopping file watcher…")
         filesystemWatcher.stop()
         log.info("Stopping workspace…")
-        workspace.stop().onSuccess {
+        workspace.stop().onComplete { mapper ->
             log.info("Stopped workspace…")
             if (config.removeOnExit) {
                 log.info("removing workspace…")
                 workspace.remove().onComplete {
                     log.info("Done.")
                     @Suppress("DEPRECATION")
-                    stopFuture.complete()
+                    mapper.succeeded()
                 }
             } else {
                 log.info("Removing on exit is disabled")
                 @Suppress("DEPRECATION")
-                stopFuture.complete()
+                mapper.succeeded()
             }
+        }.onComplete {
+            log.info("Stopping HTTP server")
+            httpServer?.close()
+            log.info("HTTP server stopped")
+            stopFuture.complete()
         }
     }
 
@@ -136,7 +144,7 @@ class GraphqlServerVerticle
         }
     }
 
-    private fun startGraphqlServer(): Future<Unit> {
+    private fun startGraphqlServer(): HttpServer {
         val router: Router = Router.router(vertx)
         router.route().handler(CorsHandler.create("*").allowedMethods(setOf(HttpMethod.GET)))
         // Handle static resources from React in production builds
@@ -146,9 +154,8 @@ class GraphqlServerVerticle
         }))
         router.route("/graphql").handler(GraphQLHandler.create(graphQL))
 
-        vertx.createHttpServer()
+        return vertx.createHttpServer()
                 .requestHandler(router::handle)
                 .listen(config.httpPort)
-        return Future.succeededFuture()
     }
 }
