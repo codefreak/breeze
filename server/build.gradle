@@ -110,6 +110,9 @@ jib {
         volumes = [
                 "/home/coder/project"
         ]
+        environment = [
+            JAVA_OPTIONS: "-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap"
+        ]
     }
 }
 tasks.jibDockerBuild.dependsOn deployFrontend
