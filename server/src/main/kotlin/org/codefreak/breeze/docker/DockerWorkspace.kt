@@ -159,7 +159,7 @@ class DockerWorkspace
     }
 
     private fun stopContainer(containerId: String) = async<Unit>(vertx) {
-        docker.stopContainerCmd(containerId).exec()
+        docker.killContainerCmd(containerId).exec()
     }
 
     private fun removeContainer(containerId: String) = async<Unit>(vertx) {
