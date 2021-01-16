@@ -2,11 +2,13 @@ package org.codefreak.breeze
 
 import com.beust.jcommander.Parameter
 import com.beust.jcommander.Parameters
+import org.codefreak.breeze.util.MemoryValidator
 import org.codefreak.breeze.util.getGid
 import org.codefreak.breeze.util.getSurroundingContainerId
 import org.codefreak.breeze.util.getUid
+import org.codefreak.breeze.util.humanReadableSizeToBytes
 import org.codefreak.breeze.util.splitCommand
-import java.util.UUID.*
+import java.util.UUID.randomUUID
 
 /**
  * Make sure the CLI option naming does not collide with Vertx
@@ -77,6 +79,18 @@ class BreezeConfiguration {
 
     @Parameter(names = ["--remove-on-exit"])
     var removeOnExit = containerId == null
+
+    @Parameter(names = ["--memory"], validateValueWith = [MemoryValidator::class])
+    var memory: String = "128m"
+
+    val memoryInBytes
+        get() = humanReadableSizeToBytes(memory)
+
+    @Parameter(names = ["--cpu-count"])
+    var cpuCount: Long = 1
+
+    @Parameter(names = ["--enable-network"])
+    var enableNetwork = false
 
     fun buildProvisionScript() = """
         mkdir -p "$homeDir"

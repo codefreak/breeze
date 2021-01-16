@@ -133,8 +133,11 @@ class DockerWorkspace
                 .withVolumes(volume)
                 .withUser("${config.dockerUid}:${config.dockerGid}")
                 .withLabels(labels)
+                .withNetworkDisabled(!config.enableNetwork)
                 .withHostConfig(
                         HostConfig.newHostConfig()
+                                .withMemory(config.memoryInBytes)
+                                .withCpuCount(config.cpuCount)
                                 .withBinds(
                                         Bind(workspaceSource, volume)
                                 )
