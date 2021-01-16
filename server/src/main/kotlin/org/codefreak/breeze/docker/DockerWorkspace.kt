@@ -148,16 +148,19 @@ class DockerWorkspace
 
     private fun pullDockerImage(imageName: String) = async(vertx) {
         if (!imageExists(imageName)) {
-            log.info("Pulling image $imageName")
+            log.info("Pulling image $imageName, this may take some time...")
             val callback = object : ResultCallback.Adapter<PullResponseItem>() {
                 override fun onNext(response: PullResponseItem) {
-                    log.info(
-                            "Pulling $imageName: ${response.progressDetail?.current}/${response.progressDetail?.total}"
-                    )
+                    if(response.progress != null) {
+                        log.debug("${response.status} layer ${response.id}: ${response.progress}")
+                    }
                 }
             }
             docker.pullImageCmd(imageName).exec(callback)
             callback.awaitCompletion()
+            log.info("Image $imageName pulled")
+        } else {
+            log.info("Image $imageName is already present on docker daemon")
         }
     }
 
