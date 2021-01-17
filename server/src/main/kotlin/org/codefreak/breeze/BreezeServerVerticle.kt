@@ -9,12 +9,12 @@ import io.vertx.core.Future
 import io.vertx.core.Vertx
 import io.vertx.core.http.HttpMethod
 import io.vertx.core.http.HttpServer
+import io.vertx.core.http.HttpServerOptions
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.handler.CorsHandler
 import io.vertx.ext.web.handler.StaticHandler
 import io.vertx.ext.web.handler.graphql.ApolloWSHandler
 import io.vertx.ext.web.handler.graphql.ApolloWSOptions
-import io.vertx.ext.web.handler.graphql.GraphQLHandler
 import org.codefreak.breeze.util.async
 import org.codefreak.breeze.vertx.FilesystemEvent
 import org.codefreak.breeze.vertx.FilesystemEventCodec
@@ -151,9 +151,11 @@ class BreezeServerVerticle
         router.route("/graphql").handler(ApolloWSHandler.create(graphQL, ApolloWSOptions().apply {
             keepAlive = 15000L
         }))
-        router.route("/graphql").handler(GraphQLHandler.create(graphQL))
 
-        return vertx.createHttpServer()
+        val serverOptions = HttpServerOptions().apply {
+            webSocketSubProtocols = listOf("graphql-ws")
+        }
+        return vertx.createHttpServer(serverOptions)
                 .requestHandler(router::handle)
                 .listen(config.httpPort)
     }
