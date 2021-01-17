@@ -128,7 +128,6 @@ const App: React.FC<AppProps> = () => {
                 height={24}
                 style={{ marginRight: '.5em' }}
               />
-              breeze
             </h1>
           </Col>
           <Col span={10}>
