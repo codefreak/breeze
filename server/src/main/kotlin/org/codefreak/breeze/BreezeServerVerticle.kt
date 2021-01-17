@@ -15,7 +15,6 @@ import io.vertx.ext.web.handler.StaticHandler
 import io.vertx.ext.web.handler.graphql.ApolloWSHandler
 import io.vertx.ext.web.handler.graphql.ApolloWSOptions
 import io.vertx.ext.web.handler.graphql.GraphQLHandler
-import io.vertx.kotlin.core.http.closeAwait
 import org.codefreak.breeze.util.async
 import org.codefreak.breeze.vertx.FilesystemEvent
 import org.codefreak.breeze.vertx.FilesystemEventCodec
@@ -27,7 +26,7 @@ import org.slf4j.LoggerFactory
 import java.util.stream.Collectors
 
 @Singleton
-class GraphqlServerVerticle
+class BreezeServerVerticle
 @Inject constructor(
         private val workspace: Workspace,
         private val config: BreezeConfiguration,
@@ -36,7 +35,7 @@ class GraphqlServerVerticle
         private val graphQL: GraphQL
 ) : AbstractVerticle() {
     companion object {
-        private val log = LoggerFactory.getLogger(GraphqlServerVerticle::class.java)
+        private val log = LoggerFactory.getLogger(BreezeServerVerticle::class.java)
     }
 
     var httpServer: HttpServer? = null
