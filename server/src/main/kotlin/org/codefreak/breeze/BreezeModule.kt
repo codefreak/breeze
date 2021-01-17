@@ -23,7 +23,7 @@ import org.codefreak.breeze.graphql.WorkspaceResolver
 import org.codefreak.breeze.workspace.Workspace
 import java.net.URI
 
-class GraphqlServerBinder : AbstractModule() {
+class BreezeModule : AbstractModule() {
     @Provides
     @Singleton
     fun docker(): DockerClient {
