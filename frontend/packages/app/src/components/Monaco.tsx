@@ -90,7 +90,7 @@ const Monaco: React.FC<MonacoProps> = ({ path, monaco }) => {
         setHasUnsavedChanges(false)
       })
     })
-  }, [model, setHasUnsavedChanges])
+  }, [model, setHasUnsavedChanges, debouncedWrite])
 
   return (
     <MonacoComp
