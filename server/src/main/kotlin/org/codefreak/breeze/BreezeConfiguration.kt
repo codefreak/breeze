@@ -32,7 +32,7 @@ class BreezeConfiguration {
     var workspaceHostname = "breeze"
 
     @Parameter(names = ["--image"])
-    var workspaceDockerImage = "python:rc"
+    var workspaceDockerImage = "ubuntu:latest"
 
     @Parameter(names = ["--workspace-path"])
     var workspaceCodePath = "/home/coder/project"

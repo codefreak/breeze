@@ -2,7 +2,8 @@
 <h1>Breeze – cloud native REPL</h1>
 </div>
 
-Breeze is a browser editor and REPL/terminal that connects to a dedicated Docker container on the server. It allows creating on-demand programming environments for your favourite programming language.dd
+Breeze is a browser editor and REPL/terminal that connects to a dedicated Docker container on the server.
+It allows creating on-demand programming environments for your favourite programming language.
 
 TODO: Screenshot
 
@@ -14,44 +15,91 @@ Every first-year student spends many hours setting up a local programming enviro
 The urge of a more powerful and customizable development environment comes automatically with more knowledge of how things work. It is less scary to install a compiler on your own if you learned the basic principles of a programming language ecosystem.
 
 ## How Breeze works
-Basically, we connect an editor and a terminal running in the browser with a Docker container on a server. That's it.
+Basically, we connect an editor and a terminal running in the browser with a Docker container ("workspace container") on the host.
+That's it.
 
-This architecture makes Breeze super flexible: Want to run Python? Just use the official Python Docker image and configure the compile/run and repl commands. This principle works for (mostly) all programming languages, and even with other tools like databases (MariaDB + `mysql` interpreter) or raw Ubuntu containers to teach e.g. Git or Bash.
+This architecture makes Breeze super flexible: Want to run Python?
+Just use the official Python Docker image and configure the compile/run and repl commands.
+This principle works for (mostly) all programming languages or raw Ubuntu containers to learn e.g. Git or Bash.
 
 ## When would I need this?
-Our main use-case is [Code FREAK](https://github.com/codefreak/codefreak), a web platform for coding education and automatic evaluation. With Breeze, we spin up a browser programming environment with pre-configured run settings. Students can program directly in the browser and do not have to initialize a local development environment.
+Our main use-case is [Code FREAK](https://github.com/codefreak/codefreak), a web platform for coding education and automatic evaluation.
+With Breeze, we spin up a browser programming environment with pre-configured run settings.
+Students can program directly in the browser and do not have to initialize a local development environment.
 
 Breeze could also be used to provide quick testing environments for new programming languages (code sandboxes).
 
 ## Show me a demo!
-There is no public demo yet, but you can try Breeze locally with Docker. Here are some examples, all of them use official images from Docker Hub.
+There is no public demo yet, but you can try Breeze locally with Docker.
+Here are some examples, all of them use official images from Docker Hub.
 
-All the local demos will use the Docker daemon itself to spin up necessary sidecar containers. The UI is accessible
-at `http://localhost:8080`.
+All the local demos will use the Docker daemon itself to spin up necessary sidecar containers.
+The UI is accessible at `http://localhost:3000` after running these commands.
 
-### Python 3.8
-```shell script
-docker run --rm -it -v${PWD}:/workspace \
-   -v /var/run/docker.sock:/var/run/docker.sock \
-   -p 8080:8080 \
-   cfreak/breeze \
-   --image=python:3.8 \
-   --main-file=main.py \
-   --repl-cmd='python -i' \
-   --run-cmd='python main.py'
-```
-`--image` tells Breeze which Docker image to use. The `--main-file` is a path relative to the working directory (default is `/workspace`). The main file will be created if it does not exist and is opened by default in the editor. `--repl-cmd` should be a command that starts an interactive session. `--run-cmd` is the command that will be executed if you press the green play button on the web UI. 
-
-### Raw Ubuntu 20.04 LTS
+### Raw Ubuntu container (default)
 ```shell script
 docker run --rm -it \
    -v /var/run/docker.sock:/var/run/docker.sock \
-   -p 8080:8080 \
-   cfreak/breeze \
-   --image=ubuntu:20.04 \
-   --repl-cmd=bash
+   -p 3000:3000 \
+   cfreak/breeze
 ```
-Btw, the default `repl-cmd` is `/bin/sh`. This should work for many images, but some very slim images even remove the default shell. In these cases you need to build a custom image.
+
+### Python 3.8
+```shell script
+docker run --rm -it -v${PWD}:/home/coder/project \
+   -v /var/run/docker.sock:/var/run/docker.sock \
+   -p 3000:3000 \
+   cfreak/breeze \
+   --image=python:3.8 --main-file=main.py --repl-cmd='python -i' --run-cmd='python main.py'
+```
+
+`--image` tells Breeze which Docker image to use.
+The `--main-file` is a path relative to the working directory (default is `/home/coder/project`).
+The main file will be created if it does not exist and is opened by default in the editor.
+`--repl-cmd` should be a command that starts an interactive session.
+`--run-cmd` is the command that will be executed if you press the green play button on the web UI.
+See the Configuration section for a list of available options.
+
+### Java 11 + Gradle
+You should place a Gradle project in the current directory with the `application` plugin.
+```shell
+docker run --rm -it -v${PWD}:/home/coder/project \
+   -v /var/run/docker.sock:/var/run/docker.sock \
+   -p 3000:3000 \
+   cfreak/breeze \
+   --image=gradle:jdk11 --repl-cmd=jshell --run-cmd='gradle run'
+```
+
+## Configuration
+Each Breeze instance is configured via command line parameters.
+The following table shows an overview.
+
+| Parameter          | Value   | Default                                   | Comment                                                                                                                                                                        |
+|--------------------|---------|-------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `--image`          | String  | `ubuntu:latest`                           | Name of the image for the workspace container.                                                                                                                                 |
+| `--repl-cmd`       | String  | `/usr/bin/env bash --noprofile --norc -i` | The command used for the interactive terminal                                                                                                                                  |
+| `--run-cmd`        | String  |                                           | The command that will started in the workspace container when the user clicks the "run" button in the frontend                                                                 |
+| `--hostname`       | String  | `breeze`                                  | Hostname for the workspace container.                                                                                                                                          |
+| `--main-file`      | String  |                                           | A default file that will be created if it does not exist and opened in the IDE initially                                                                                       |
+| `--enable-network` | Boolean | `false`                                   | Allow the workspace container to access the network/internet. The container will be added to the default network if this is enabled.                                           |
+| `--remove-on-exit` | Boolean | `false`                                   | Remove the workspace container when the Breeze server stops                                                                                                                    |
+| `--memory`         | String  | `128m`                                    | Memory limit of the workspace container in bytes. An optional k (kilobytes), m (megabytes) or g (gigabytes) suffix can be used                                                 |
+| `--cpu-count`      | Int     | `1`                                       | Number of CPU cores available for the workspace container.                                                                                                                     |
+
+The follow options are also available, but you should not touch them as most of them are either detected automatically or contain default values that will fit 99% of use-cases.
+
+| Parameter          | Value   | Default                                 | Comment                                                                                                                                                                        |
+|--------------------|---------|-----------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `--http-port`      | Int     | `3000`                                  | A TCP port Breeze will listen on                                                                                                                                               |
+| `--instance-id`    | String  |                                         | Each instance has a unique ID to identify the sidecar-container. By default this is the id of the surrounding container which should fit most needs.                           |
+| `--workspace-path` | String  | `/home/coder/project`                   | Path inside the workspace container where the project data will be mounted.                                                                                                    |
+| `--workdir`        | String  | `/home/coder/project`                   | Working directory inside the workspace container. Should be the same as --workspace-path                                                                                       |
+| `--container-id`   | String  |                                         | ID of the container the Breeze server is running inside. Will be detected automatically by default.                                                                            |
+| `--uid`            | String  |                                         | UID of the user that will be owning the code and running processes inside the workspace container                                                                              |
+| `--gid`            | String  |                                         | GID of the user that will be owning the code and running processes inside the workspace container. By default the same GID of the user in the Breeze Server Container is used. |
+| `--user-name`      | String  | `coder`                                 | Name of the user inside the workspace container                                                                                                                                |
+| `--group-name`     | String  | `coder`                                 | Name of the user's default group inside the workspace container                                                                                                                |
+| `--home`           | String  | `/home/coder`                           | Home directory of the user inside the workspace container                                                                                                                      |
 
 ## Setup
 
