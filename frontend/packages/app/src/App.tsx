@@ -145,7 +145,7 @@ const App: React.FC<AppProps> = () => {
         </Row>
       </Header>
       <Content>
-        <Row style={{ height: '100%', overflow: 'hidden' }}>
+        <Row style={{ height: 'calc(100vh - 94px)' }}>
           <Col span={14} style={{ height: '100%' }}>
             <Editor />
           </Col>
