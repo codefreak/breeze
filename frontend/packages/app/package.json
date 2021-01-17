@@ -34,7 +34,7 @@
     "prettier": "^2.0.4",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
-    "react-scripts": "3.4.1",
+    "react-scripts": "3.4.4",
     "react-storage-hooks": "^4.0.1",
     "subscriptions-transport-ws": "^0.9.16",
     "ts-debounce": "^2.0.1",
