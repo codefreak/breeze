@@ -40,7 +40,10 @@ const Monaco: React.FC<MonacoProps> = ({ path, monaco }) => {
   const model =
     monaco.editor.getModel(monaco.Uri.file(path)) ||
     monaco.editor.createModel('', undefined, monaco.Uri.file(path))
-  const { data } = useGetFileQuery({ variables: { path } })
+  const { data } = useGetFileQuery({
+    variables: { path },
+    fetchPolicy: 'network-only'
+  })
   const [writeFile] = useWriteFileMutation()
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState<boolean>(false)
   const [monacoInstance, setMonacoInstance] = useState<
