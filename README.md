@@ -5,7 +5,7 @@
 Breeze is a browser editor and REPL/terminal that connects to a dedicated Docker container on the server.
 It allows creating on-demand programming environments for your favourite programming language.
 
-TODO: Screenshot
+![alt text](./screenshot.png)
 
 ## "But wait, there is Theia, Eclipse Che, VS Codespaces, Coder, …?"
 Yes, and Breeze should not replace them. All the mentioned Cloud-"Editors" are full-fledged IDEs packed with features and are customizable to the tiniest Button. Cloud IDEs are build for professional developers working on larger projects. Our main reason to build Breeze was giving first semester CS students a ready to go programming environment with a big green play button. 
