@@ -1,5 +1,5 @@
 <div align="center"><img src="./frontend/packages/app/public/breeze-logo-square.svg" width="200" height="200" />
-<h1>Breeze – cloud native REPL</h1>
+<h1>Breeze – simple browser editor and code execution</h1>
 </div>
 
 Breeze is a browser editor and REPL/terminal that connects to a dedicated Docker container on the server.
