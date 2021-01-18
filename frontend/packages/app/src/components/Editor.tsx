@@ -15,21 +15,16 @@ import {
 import withConfig, { WithConfigProps } from '../util/withConfig'
 
 import './Editor.less'
-import useWorkspaceOption from '../hooks/useWorkspaceOption'
 
 interface EditorProps extends WithConfigProps {
   defaultFile?: string
 }
 
 const Editor: React.FC<EditorProps> = ({ config: { mainFile } }) => {
-  const [fileStack, setFileStack] = useWorkspaceOption<string[]>(
-    'opened-files',
+  const [fileStack, setFileStack] = useState<string[]>(
     mainFile ? [mainFile] : []
   )
-  const [currentFile, setCurrentFile] = useWorkspaceOption<string>(
-    'current-file',
-    fileStack[0]
-  )
+  const [currentFile, setCurrentFile] = useState<string>(fileStack[0])
   const [selectedPath, setSelectedPath] = useState<string>('/')
   const [createFile] = useCreateFileMutation()
   const [createDirectory] = useCreateDirectoryMutation()
