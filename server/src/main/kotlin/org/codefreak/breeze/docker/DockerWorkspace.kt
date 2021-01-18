@@ -134,6 +134,7 @@ class DockerWorkspace
                 .withUser("${config.dockerUid}:${config.dockerGid}")
                 .withLabels(labels)
                 .withNetworkDisabled(!config.enableNetwork)
+                .withEntrypoint(mutableListOf())
                 .withHostConfig(
                         HostConfig.newHostConfig()
                                 .withMemory(config.memoryInBytes)
