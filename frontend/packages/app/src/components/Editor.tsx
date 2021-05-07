@@ -15,6 +15,7 @@ import {
 import withConfig, { WithConfigProps } from '../util/withConfig'
 
 import './Editor.less'
+import { getCanonicalPath } from '../util/path'
 
 interface EditorProps extends WithConfigProps {
   defaultFile?: string
@@ -22,10 +23,10 @@ interface EditorProps extends WithConfigProps {
 
 const Editor: React.FC<EditorProps> = ({ config: { mainFile } }) => {
   const [fileStack, setFileStack] = useState<string[]>(
-    mainFile ? [mainFile] : []
+    mainFile ? [getCanonicalPath(mainFile)] : []
   )
   const [currentFile, setCurrentFile] = useState<string | undefined>(
-    fileStack[0]
+    fileStack.length ? fileStack[0] : undefined
   )
   const [selectedPath, setSelectedPath] = useState<string>('/')
   const [createFile] = useCreateFileMutation()
@@ -35,7 +36,7 @@ const Editor: React.FC<EditorProps> = ({ config: { mainFile } }) => {
 
   const setOpenFile = useCallback(
     (path: string) => {
-      const normalizedPath = path.replace(/^\/+/, '')
+      const normalizedPath = getCanonicalPath(path)
       // insert after current opened file
       if (fileStack.indexOf(normalizedPath) === -1) {
         setFileStack(insertAfter(fileStack, normalizedPath, currentFile))
@@ -47,9 +48,10 @@ const Editor: React.FC<EditorProps> = ({ config: { mainFile } }) => {
 
   const closeFileTab = useCallback(
     path => {
-      const newFileStack = remove(fileStack, path)
+      const normalizedPath = getCanonicalPath(path)
+      const newFileStack = remove(fileStack, normalizedPath)
       // select another file if current one is closed
-      if (currentFile && currentFile === path) {
+      if (currentFile && currentFile === normalizedPath) {
         if (newFileStack.length) {
           // set the current file to the next or last one
           const newFileIndex = Math.min(

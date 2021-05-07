@@ -1,5 +1,10 @@
 import { Tree, Input, Menu, Dropdown, Modal } from 'antd'
-import React, { KeyboardEventHandler, useEffect, useState } from 'react'
+import React, {
+  KeyboardEventHandler,
+  useEffect,
+  useMemo,
+  useState
+} from 'react'
 import './FileTree.less'
 import { listToTreeByPath, sortTree, walkTree } from '@codefreak/tree-utils'
 import { basename, dirname, join } from 'path'
@@ -16,9 +21,10 @@ import useFiles from '../hooks/useFiles'
 import { TreeProps } from 'antd/lib/tree'
 import LoadingIndicator from './LoadingIndicator'
 import { InputProps } from 'antd/es/input'
+import { getCanonicalPath } from '../util/path'
 
 // special key for the tree node containing the input field (creating, renaming files)
-const NODE_CREATOR_KEY = '\0'
+const NODE_CREATE_KEY = '\0'
 
 export enum NodeType {
   FILE = 'file',
@@ -130,7 +136,7 @@ const FileTree: React.FC<FileTreeProps> = props => {
         icon={<EditOutlined />}
         onClick={() => {
           setAdding(undefined)
-          setRenaming(rightClicked?.path?.replace(/^\/+/, ''))
+          setRenaming(rightClicked?.path)
         }}
       >
         Rename {rightClicked?.isFile ? 'File' : 'Directory'}
@@ -159,15 +165,14 @@ const FileTree: React.FC<FileTreeProps> = props => {
     </Menu>
   )
 
-  if (loading || data === undefined) {
-    return <LoadingIndicator />
-  }
-
-  const treeData = sortTree(
-    listToTreeByPath(
+  const treeData = useMemo(() => {
+    if (data === undefined) {
+      return undefined
+    }
+    const tree = listToTreeByPath(
       data.files.map(e => {
-        let title: React.ReactElement | string = basename(e.path)
-        const isRenameTarget = renaming === e.path
+        let title: React.ReactNode = basename(e.path)
+        const isRenameTarget = renaming === getCanonicalPath(e.path)
         if (renaming && isRenameTarget) {
           title = (
             <TreeInput
@@ -199,46 +204,55 @@ const FileTree: React.FC<FileTreeProps> = props => {
       }),
       'path'
     )
-  )
-  const rootTreeNodes: TreeProps['treeData'] =
-    (treeData[0].key === '/' ? treeData[0].children : treeData) || []
 
-  if (adding !== undefined) {
-    // insert adding node at right position
-    const addTreeNode = {
-      key: NODE_CREATOR_KEY,
-      icon:
-        adding.type === NodeType.FILE ? (
-          <FileAddOutlined />
-        ) : (
-          <FolderAddOutlined />
+    const sortedTree = sortTree(tree)
+
+    const rootTreeNodes: TreeProps['treeData'] =
+      (sortedTree[0].key === '/' ? sortedTree[0].children : sortedTree) || []
+
+    if (adding !== undefined) {
+      // insert adding node at right position
+      const addTreeNode = {
+        key: NODE_CREATE_KEY,
+        icon:
+          adding.type === NodeType.FILE ? (
+            <FileAddOutlined />
+          ) : (
+            <FolderAddOutlined />
+          ),
+        title: (
+          <TreeInput
+            onCancel={() => setAdding(undefined)}
+            onConfirm={async name => {
+              const path = join(adding.parent, name)
+              onCreate && (await onCreate(path, adding.type))
+              setAdding(undefined)
+            }}
+          />
         ),
-      title: (
-        <TreeInput
-          onCancel={() => setAdding(undefined)}
-          onConfirm={async name => {
-            const path = join(adding.parent, name)
-            onCreate && (await onCreate(path, adding.type))
-            setAdding(undefined)
-          }}
-        />
-      ),
-      className: 'breeze-file-tree-adder'
+        className: 'breeze-file-tree-adder'
+      }
+      if (adding.parent === '/') {
+        rootTreeNodes.push(addTreeNode)
+      } else {
+        walkTree(rootTreeNodes, node => {
+          if (node.key === adding.parent) {
+            node.children = [addTreeNode, ...(node.children || [])]
+          }
+        })
+      }
     }
-    if (adding.parent === '/') {
-      rootTreeNodes.push(addTreeNode)
-    } else {
-      walkTree(rootTreeNodes, node => {
-        if (node.key === adding.parent) {
-          node.children = [addTreeNode, ...(node.children || [])]
-        }
-      })
-    }
+
+    return rootTreeNodes
+  }, [data, setRenaming, renaming, onRename, adding, onCreate])
+
+  if (loading || treeData === undefined) {
+    return <LoadingIndicator />
   }
 
   const onItemRightClick: TreeProps['onRightClick'] = ({ node }) => {
     const path = node.key.toString()
-    if (path.indexOf(NODE_CREATOR_KEY) !== -1) {
+    if (path.indexOf(NODE_CREATE_KEY) !== -1) {
       return
     }
     setRightClicked({
@@ -271,11 +285,11 @@ const FileTree: React.FC<FileTreeProps> = props => {
 
   const onClick: FileTreeProps['onClick'] = async (e, treeNode) => {
     const path = treeNode.key.toString()
-    if (path === NODE_CREATOR_KEY || !onFileClick) {
+    if (path === NODE_CREATE_KEY || !onFileClick) {
       return
     }
     await onFileClick(
-      path.replace(/^\/+/, ''),
+      path,
       treeNode.isLeaf ? NodeType.FILE : NodeType.DIRECTORY
     )
   }
@@ -293,7 +307,7 @@ const FileTree: React.FC<FileTreeProps> = props => {
             blockNode
             showIcon={true}
             {...treeProps}
-            treeData={rootTreeNodes}
+            treeData={treeData}
             expandedKeys={expandedKeys}
             onExpand={onExpand}
             onClick={onClick}
