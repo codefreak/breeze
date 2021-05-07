@@ -43,27 +43,35 @@ const Editor: React.FC<EditorProps> = ({ config: { mainFile } }) => {
     [fileStack, setFileStack, setCurrentFile, currentFile]
   )
 
+  const closeFileTab = useCallback(
+    path => {
+      const newFileStack = remove(fileStack, path)
+      // select another file if current one is closed
+      if (currentFile === path) {
+        const newFileIndex = Math.min(
+          fileStack.indexOf(currentFile),
+          newFileStack.length - 1
+        )
+        setCurrentFile(newFileStack[newFileIndex])
+      }
+      setFileStack(newFileStack)
+      return newFileStack
+    },
+    [fileStack, setFileStack]
+  )
+
   const onEditTab: TabsProps['onEdit'] = useCallback(
     (targetKey, action) => {
       if (action === 'remove') {
         const path = targetKey.toString()
-        const newFileStack = remove(fileStack, path)
-        // select another file if current one is closed
-        if (currentFile === path) {
-          const newFileIndex = Math.min(
-            fileStack.indexOf(currentFile),
-            newFileStack.length - 1
-          )
-          setCurrentFile(newFileStack[newFileIndex])
-        }
-        setFileStack(newFileStack)
+        closeFileTab(path)
       }
     },
-    [fileStack, setFileStack, currentFile, setCurrentFile]
+    [closeFileTab]
   )
 
   const onFileClick: FileTreeProps['onFileClick'] = useCallback(
-    async (nodeType, path) => {
+    async (path, nodeType) => {
       if (nodeType === NodeType.DIRECTORY) {
         setSelectedPath(path)
         return
@@ -74,7 +82,7 @@ const Editor: React.FC<EditorProps> = ({ config: { mainFile } }) => {
   )
 
   const onCreateFile: FileTreeProps['onCreate'] = useCallback(
-    async (type, name) => {
+    async (name, type) => {
       const path = join(selectedPath, name)
       const commonOptions = { variables: { path } }
       if (type === NodeType.DIRECTORY) {
@@ -88,13 +96,15 @@ const Editor: React.FC<EditorProps> = ({ config: { mainFile } }) => {
   )
 
   const onFileRename: FileTreeProps['onRename'] = async (oldPath, newName) => {
+    closeFileTab(oldPath)
     const newPath = join(dirname(oldPath), newName)
     await moveFile({
       variables: { oldPath, newPath }
     })
   }
 
-  const onDeleteFile: FileTreeProps['onDelete'] = async (_, path) => {
+  const onDeleteFile: FileTreeProps['onDelete'] = async path => {
+    closeFileTab(path)
     await deleteFile({
       variables: {
         path

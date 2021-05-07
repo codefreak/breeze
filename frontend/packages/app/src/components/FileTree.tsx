@@ -47,11 +47,11 @@ const TreeInput: React.FC<TreeAddInputProps> = props => {
 }
 
 export interface FileTreeProps extends TreeProps {
-  onCreate?: (type: NodeType, name: string) => Promise<void>
-  onRename?: (oldName: string, newName: string) => Promise<void>
-  onFileClick?: (type: NodeType, name: string) => Promise<void>
-  onDelete?: (type: NodeType, path: string) => Promise<void>
-  onMove?: (path: string, target: string) => Promise<void>
+  onCreate?: (name: string, type: NodeType) => Promise<void>
+  onRename?: (oldName: string, newName: string, type: NodeType) => Promise<void>
+  onFileClick?: (name: string, type: NodeType) => Promise<void>
+  onDelete?: (path: string, type: NodeType) => Promise<void>
+  onMove?: (path: string, target: string, type: NodeType) => Promise<void>
 }
 
 const FileTree: React.FC<FileTreeProps> = props => {
@@ -116,8 +116,8 @@ const FileTree: React.FC<FileTreeProps> = props => {
       onOk: async () => {
         if (onDelete) {
           await onDelete(
-            rightClicked?.isFile === false ? NodeType.DIRECTORY : NodeType.FILE,
-            path
+            path,
+            rightClicked?.isFile === false ? NodeType.DIRECTORY : NodeType.FILE
           )
         }
       }
@@ -174,7 +174,11 @@ const FileTree: React.FC<FileTreeProps> = props => {
               defaultValue={basename(renaming)}
               onConfirm={async (newName: string) => {
                 if (onRename) {
-                  await onRename(renaming, newName)
+                  await onRename(
+                    renaming,
+                    newName,
+                    e.__typename === 'File' ? NodeType.FILE : NodeType.DIRECTORY
+                  )
                 }
                 setRenaming(undefined)
               }}
@@ -214,7 +218,7 @@ const FileTree: React.FC<FileTreeProps> = props => {
           onCancel={() => setAdding(undefined)}
           onConfirm={async name => {
             const path = join(adding.parent, name)
-            onCreate && (await onCreate(adding.type, path))
+            onCreate && (await onCreate(path, adding.type))
             setAdding(undefined)
           }}
         />
@@ -262,7 +266,7 @@ const FileTree: React.FC<FileTreeProps> = props => {
     if (path === target) {
       return
     }
-    await onMove(path, target)
+    await onMove(path, target, node.isLeaf ? NodeType.FILE : NodeType.DIRECTORY)
   }
 
   const onClick: FileTreeProps['onClick'] = async (e, treeNode) => {
@@ -271,8 +275,8 @@ const FileTree: React.FC<FileTreeProps> = props => {
       return
     }
     await onFileClick(
-      treeNode.isLeaf ? NodeType.FILE : NodeType.DIRECTORY,
-      path.replace(/^\/+/, '')
+      path.replace(/^\/+/, ''),
+      treeNode.isLeaf ? NodeType.FILE : NodeType.DIRECTORY
     )
   }
 
