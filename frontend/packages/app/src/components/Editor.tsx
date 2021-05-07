@@ -24,7 +24,9 @@ const Editor: React.FC<EditorProps> = ({ config: { mainFile } }) => {
   const [fileStack, setFileStack] = useState<string[]>(
     mainFile ? [mainFile] : []
   )
-  const [currentFile, setCurrentFile] = useState<string>(fileStack[0])
+  const [currentFile, setCurrentFile] = useState<string | undefined>(
+    fileStack[0]
+  )
   const [selectedPath, setSelectedPath] = useState<string>('/')
   const [createFile] = useCreateFileMutation()
   const [createDirectory] = useCreateDirectoryMutation()
@@ -47,17 +49,23 @@ const Editor: React.FC<EditorProps> = ({ config: { mainFile } }) => {
     path => {
       const newFileStack = remove(fileStack, path)
       // select another file if current one is closed
-      if (currentFile === path) {
-        const newFileIndex = Math.min(
-          fileStack.indexOf(currentFile),
-          newFileStack.length - 1
-        )
-        setCurrentFile(newFileStack[newFileIndex])
+      if (currentFile && currentFile === path) {
+        if (newFileStack.length) {
+          // set the current file to the next or last one
+          const newFileIndex = Math.min(
+            fileStack.indexOf(currentFile),
+            newFileStack.length - 1
+          )
+          setCurrentFile(newFileStack[newFileIndex])
+        } else {
+          // if there is no file left simply close the tab
+          setCurrentFile(undefined)
+        }
       }
       setFileStack(newFileStack)
       return newFileStack
     },
-    [fileStack, setFileStack]
+    [currentFile, fileStack, setFileStack]
   )
 
   const onEditTab: TabsProps['onEdit'] = useCallback(
