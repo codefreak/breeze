@@ -207,7 +207,7 @@ const FileTree: React.FC<FileTreeProps> = props => {
 
     const sortedTree = sortTree(tree)
 
-    const rootTreeNodes: TreeProps['treeData'] =
+    let rootTreeNodes: TreeProps['treeData'] =
       (sortedTree[0].key === '/' ? sortedTree[0].children : sortedTree) || []
 
     if (adding !== undefined) {
@@ -233,7 +233,7 @@ const FileTree: React.FC<FileTreeProps> = props => {
         className: 'breeze-file-tree-adder'
       }
       if (adding.parent === '/') {
-        rootTreeNodes.push(addTreeNode)
+        rootTreeNodes = [addTreeNode, ...rootTreeNodes]
       } else {
         walkTree(rootTreeNodes, node => {
           if (node.key === adding.parent) {
