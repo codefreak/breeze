@@ -3,7 +3,7 @@ import { Col, Row, Tabs } from 'antd'
 import FileTree, { FileTreeProps, NodeType } from './FileTree'
 import Monaco from './Monaco'
 import { BreezeComponent } from '../App'
-import { basename, join } from 'path'
+import { basename, dirname, join } from 'path'
 import { insertAfter, remove } from '../util/array'
 import { TabsProps } from 'antd/es/tabs'
 import {
@@ -87,7 +87,8 @@ const Editor: React.FC<EditorProps> = ({ config: { mainFile } }) => {
     [selectedPath, createFile, createDirectory, setOpenFile]
   )
 
-  const onFileRename: FileTreeProps['onRename'] = async (oldPath, newPath) => {
+  const onFileRename: FileTreeProps['onRename'] = async (oldPath, newName) => {
+    const newPath = join(dirname(oldPath), newName)
     await moveFile({
       variables: { oldPath, newPath }
     })
