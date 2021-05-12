@@ -5,6 +5,7 @@ plugins {
 node {
     // only download on CI systems
     download = System.getenv('CI') != null
+    version = "16.1.0"
 }
 
 task assemble(type: YarnTask) {
