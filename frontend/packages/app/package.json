@@ -52,7 +52,7 @@
     "lint": "npm-run-all lint:**",
     "fix": "npm-run-all fix:**",
     "generate": "graphql-codegen",
-    "tsc": "tsc"
+    "tsc": "yarn run generate && tsc"
   },
   "browserslist": {
     "production": [
