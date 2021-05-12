@@ -63,7 +63,7 @@ export const objectListToTree = <T>(
 }
 
 /**
- * Convert a list to using properties from each element
+ * Convert a list to tree using a key and parent property from each element
  *
  * @param list
  * @param keyProperty
@@ -77,7 +77,7 @@ export const listToTreeByProperty = <
   list: T[],
   keyProperty: S,
   parentKeyProperty: Q
-) =>
+): (T & TreeNode<T>)[] =>
   objectListToTree(
     list,
     (item: T) => item[keyProperty],
@@ -89,7 +89,7 @@ export type TreeSortFunction<T> = (a: TreeNode<T>, b: TreeNode<T>) => number
 /**
  * Default tree sorting function that compares TreeNodes by key alphabetically
  */
-export const treeKeySorter = <T>(a: TreeNode<T>, b: TreeNode<T>) => {
+export const treeKeySorter = <T>(a: TreeNode<T>, b: TreeNode<T>): number => {
   return a.key.toString().localeCompare(b.key.toString())
 }
 

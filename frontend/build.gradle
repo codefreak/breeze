@@ -16,3 +16,12 @@ task bundle(type: YarnTask) {
     args = ['run', 'build']
     dependsOn yarn_install
 }
+
+task lint(type: YarnTask) {
+    args = ['run', 'lint']
+    dependsOn yarn_install
+}
+
+task check(type: YarnTask) {
+    dependsOn lint
+}

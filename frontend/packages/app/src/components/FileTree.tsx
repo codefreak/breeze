@@ -61,29 +61,25 @@ export interface FileTreeProps extends TreeProps {
 }
 
 const FileTree: React.FC<FileTreeProps> = props => {
-  const {
-    onCreate,
-    onRename,
-    onFileClick,
-    onDelete,
-    onMove,
-    ...treeProps
-  } = props
+  const { onCreate, onRename, onFileClick, onDelete, onMove, ...treeProps } =
+    props
   const { loading, data } = useFiles()
-  const [rightClicked, setRightClicked] = useState<
-    | {
-        isFile: boolean
-        path: string
-      }
-    | undefined
-  >(undefined)
-  const [adding, setAdding] = useState<
-    | {
-        parent: string
-        type: NodeType
-      }
-    | undefined
-  >()
+  const [rightClicked, setRightClicked] =
+    useState<
+      | {
+          isFile: boolean
+          path: string
+        }
+      | undefined
+    >(undefined)
+  const [adding, setAdding] =
+    useState<
+      | {
+          parent: string
+          type: NodeType
+        }
+      | undefined
+    >()
   const [renaming, setRenaming] = useState<string | undefined>()
   const [expandedKeys, setExpandedKeys] = useState<string[]>([])
 
@@ -305,7 +301,7 @@ const FileTree: React.FC<FileTreeProps> = props => {
         <div className="breeze-file-tree-trigger">
           <Tree
             blockNode
-            showIcon={true}
+            showIcon
             {...treeProps}
             treeData={treeData}
             expandedKeys={expandedKeys}

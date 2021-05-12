@@ -171,4 +171,4 @@ const Editor: React.FC<EditorProps> = ({ config: { mainFile } }) => {
   )
 }
 
-export default withConfig<typeof Editor, EditorProps>(Editor)
+export default withConfig(Editor)

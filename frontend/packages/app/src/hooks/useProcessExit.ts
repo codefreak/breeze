@@ -13,7 +13,7 @@ const useProcessExit = (
     ProcessWaitSubscription,
     ProcessWaitSubscriptionVariables
   >
-) => {
+): void => {
   const { data } = useProcessWaitSubscription({
     ...additionalOptions,
     variables: { id }

@@ -37,8 +37,9 @@ const getConnectionStatusFromReadyState = (
  */
 export const useApolloConnectionStatus = (): ConnectionStatus => {
   const apollo = useApolloClient()
-  // @ts-ignore
-  const subClient = apollo.link.subscriptionClient as SubscriptionClient
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const subClient = (apollo.link as any)
+    .subscriptionClient as SubscriptionClient
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>(
     getConnectionStatusFromReadyState(subClient.status)
   )

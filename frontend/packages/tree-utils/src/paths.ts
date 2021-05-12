@@ -1,5 +1,5 @@
 import { dirname, resolve } from 'path'
-import { objectListToTree, PropertiesOfType } from './common'
+import { objectListToTree, PropertiesOfType, TreeNode } from './common'
 
 const abspath = (path: string) => resolve('/', path)
 const isSamePath = (a: string, b: string) => abspath(a) === abspath(b)
@@ -10,7 +10,7 @@ export const listToTreeByPath = <
 >(
   list: T[],
   pathProperty: S
-) => {
+): (T & TreeNode<T>)[] => {
   const pathExtract = (obj: T) => abspath(obj[pathProperty])
   const parentPathExtract = (obj: T) => {
     const path = pathExtract(obj)
@@ -38,7 +38,7 @@ export const fillMissingPaths = <
 >(
   list: T[],
   pathProperty: S
-) => {
+): (T | { [S: string]: string })[] => {
   const neededPaths: string[] = []
   const foundPaths: string[] = []
   for (let i = 0; i < list.length; i++) {

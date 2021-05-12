@@ -72,7 +72,7 @@ const XTerm: React.FC<XTermProps> = ({ onReady, onResize }) => {
     }
   }, [terminal, onReady, onResize])
 
-  const createShellRootRef = useCallback((ref: any) => {
+  const createShellRootRef = useCallback((ref: HTMLDivElement) => {
     setShellRootRef(ref)
   }, [])
 

@@ -25,9 +25,7 @@ export const BreezeComponent: React.FC<{ title: string }> = props => {
   )
 }
 
-interface AppProps {}
-
-const App: React.FC<AppProps> = () => {
+const App: React.FC = () => {
   const [processId, setProcessId] = useState<string>()
   const [runId, setRunId] = useState<string>()
   const [runExited, setRunExited] = useState<boolean>(false)
@@ -135,9 +133,9 @@ const App: React.FC<AppProps> = () => {
               loading={runLoading || stopLoading}
               icon={runId ? <StopFilled /> : <PlayCircleFilled />}
               onClick={onRunToggleClick}
-              type={'primary'}
+              type="primary"
               danger={!!runId}
-              color={'red'}
+              color="red"
             >
               {runId ? 'Stop run' : 'Run code'}
             </Button>

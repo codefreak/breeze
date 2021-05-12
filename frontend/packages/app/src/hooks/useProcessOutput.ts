@@ -12,7 +12,7 @@ const useProcessOutput = (
     ProcessOutputSubscription,
     ProcessOutputSubscriptionVariables
   >
-) => {
+): void => {
   useProcessOutputSubscription({
     ...additionalOptions,
     variables: { id },

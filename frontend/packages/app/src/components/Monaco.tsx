@@ -46,9 +46,8 @@ const Monaco: React.FC<MonacoProps> = ({ path, monaco }) => {
   })
   const [writeFile] = useWriteFileMutation()
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState<boolean>(false)
-  const [monacoInstance, setMonacoInstance] = useState<
-    editor.IStandaloneCodeEditor
-  >()
+  const [monacoInstance, setMonacoInstance] =
+    useState<editor.IStandaloneCodeEditor>()
 
   // only writes after a delay of 250ms to server
   const debouncedWrite = useCallback(
@@ -84,12 +83,13 @@ const Monaco: React.FC<MonacoProps> = ({ path, monaco }) => {
   }, [hasUnsavedChanges])
 
   useEffect(() => {
-    model.onDidChangeContent(() => {
+    const offDidChangeContent = model.onDidChangeContent(() => {
       setHasUnsavedChanges(true)
       debouncedWrite(() => {
         setHasUnsavedChanges(false)
       })
     })
+    return () => offDidChangeContent.dispose()
   }, [model, setHasUnsavedChanges, debouncedWrite])
 
   return (
