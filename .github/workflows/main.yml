@@ -56,9 +56,9 @@ jobs:
           docker logout
           docker login -u "${{ secrets.DOCKER_USERNAME }}" -p "${{ secrets.DOCKER_PASSWORD }}"
 
-      - name: Deploy master branch as canary
+      - name: Deploy master branch as latest
         if: github.ref == 'refs/heads/master'
-        run: python -m docker_ci_deploy --tag canary -- cfreak/breeze
+        run: python -m docker_ci_deploy --tag latest -- cfreak/breeze
 
       # ${GITHUB_REF/refs\/tags\//} returns the tag name from 'refs/tags/TAG_NAME'
       - name: Deploy tags
