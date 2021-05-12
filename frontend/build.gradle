@@ -15,7 +15,7 @@ task assemble(type: YarnTask) {
 
 task bundle(type: YarnTask) {
     args = ['run', 'build']
-    dependsOn yarn_install
+    dependsOn assemble
 }
 
 task lint(type: YarnTask) {

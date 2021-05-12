@@ -18,8 +18,8 @@
   ],
   "scripts": {
     "test": "yarn workspaces run test",
-    "tsc": "yarn workspaces run tsc",
-    "start": "yarn workspace @codefreak/breeze-app generate && yarn run tsc && yarn workspace @codefreak/breeze-app start",
+    "tsc": "yarn workspace @codefreak/tree-utils tsc && yarn workspace @codefreak/breeze-app tsc",
+    "start": "yarn run tsc && yarn workspace @codefreak/breeze-app start",
     "build": "yarn run tsc && yarn workspace @codefreak/breeze-app build",
     "lint": "yarn run lint:eslint && yarn run lint:prettier",
     "lint:eslint": "eslint \"packages/*/src/**/*.{ts,tsx,js,jsx}\"",
